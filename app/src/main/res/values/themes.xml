@@ -3,6 +3,9 @@
     <style name="Base.Theme.Rednote" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- 设置背景色为白色 -->
+        <item name="android:colorBackground">@color/white</item>
+        <item name="android:windowBackground">@color/white</item>
     </style>
 
     <style name="Theme.Rednote" parent="Base.Theme.Rednote" />
