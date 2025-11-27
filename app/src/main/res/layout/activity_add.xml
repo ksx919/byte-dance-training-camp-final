@@ -2,9 +2,118 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/main"
+    android:id="@+id/add"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.publish.AddActivity">
+    android:background="@color/white"
+    android:paddingHorizontal="16dp">
+
+    <ImageView
+        android:id="@+id/btn_back"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_marginTop="16dp"
+        android:src="@drawable/arrow_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
+<!--    <TextView-->
+<!--        android:id="@+id/btn_publish"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="发布"-->
+<!--        android:textColor="@color/holo_red_dark"-->
+<!--        android:textSize="16sp"-->
+<!--        android:textStyle="bold"-->
+<!--        app:layout_constraintBottom_toBottomOf="@+id/btn_back"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintTop_toTopOf="@+id/btn_back" />-->
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/layout_image_picker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="24dp"
+        app:layout_constraintTop_toBottomOf="@+id/btn_back">
+
+        <FrameLayout
+            android:id="@+id/btn_add_image"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/bg_add_image_gray"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+"
+                android:textColor="#999999"
+                android:textSize="40sp"
+                android:layout_gravity="center"
+                android:includeFontPadding="false"
+                android:layout_marginBottom="4dp"/>
+        </FrameLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_selected_images"
+            android:layout_width="wrap_content"
+            android:layout_height="100dp"
+            android:orientation="horizontal"
+            android:overScrollMode="never"
+            app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/btn_add_image"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:listitem="@layout/item_publish_image" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <View
+        android:id="@+id/divider1"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="24dp"
+        android:background="#EEEEEE"
+        app:layout_constraintTop_toBottomOf="@+id/layout_image_picker" />
+
+    <EditText
+        android:id="@+id/et_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@null"
+        android:hint="填写标题会有更多人看哦~"
+        android:textColor="#333333"
+        android:textColorHint="#999999"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        android:maxLines="2"
+        android:ellipsize="end"
+        app:layout_constraintTop_toBottomOf="@+id/divider1" />
+
+    <View
+        android:id="@+id/divider2"
+        android:layout_width="match_parent"
+        android:layout_height="0.5dp"
+        android:layout_marginTop="16dp"
+        android:background="#EEEEEE"
+        app:layout_constraintTop_toBottomOf="@+id/et_title" />
+
+    <EditText
+        android:id="@+id/et_content"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        android:background="@null"
+        android:gravity="top"
+        android:hint="添加正文"
+        android:textColor="#333333"
+        android:textColorHint="#999999"
+        android:textSize="15sp"
+        android:lineSpacingExtra="4dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/divider2" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

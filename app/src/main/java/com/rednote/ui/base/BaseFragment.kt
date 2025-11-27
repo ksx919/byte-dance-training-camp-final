@@ -40,7 +40,7 @@ abstract class BaseFragment<VB : ViewBinding, VM : BaseViewModel> : Fragment() {
         // 3. 自动监听 BaseViewModel 的通用状态 (Loading, Toast)
         observeBaseEvents()
 
-        // 4. 加载数据 (可选)
+        // 4. 加载数据
         initData()
     }
 

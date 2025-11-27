@@ -4,4 +4,6 @@
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#FF999999</color>
     <color name="theme_red">#FD2342</color>
+    <color name="holo_red_dark">#CC0000</color>
+    <color name="darker_gray">#AAAAAA</color>
 </resources>
