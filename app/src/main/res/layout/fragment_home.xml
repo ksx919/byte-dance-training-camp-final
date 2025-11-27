@@ -9,7 +9,7 @@
     <!-- 顶部导航条 -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/home_top_bar_container"
-        android:name="com.rednote.fragment.HomeTopBarFragment"
+        android:name="com.rednote.ui.main.home.HomeTopBarFragment"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
@@ -17,12 +17,11 @@
         app:layout_constraintEnd_toEndOf="parent" />
 
     <!-- 预留主内容区域，可放列表等 -->
-    <FrameLayout
+    <androidx.fragment.app.FragmentContainerView
         android:id="@+id/home_content_container"
-        android:layout_width="0dp"
+        android:name="com.rednote.ui.main.home.ContentFragment"
+        android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
-        android:background="@color/white"
         app:layout_constraintTop_toBottomOf="@id/home_top_bar_container"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

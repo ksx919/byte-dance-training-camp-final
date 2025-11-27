@@ -3,8 +3,11 @@
     <string name="me">我</string>
     <string name="message">消息</string>
     <string name="shop">市集</string>
+    <string name="weather">天气</string>
     <string name="home">首页</string>
     <string name="discover">发现</string>
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="weather_loading_locating">正在定位，请稍候...</string>
+    <string name="weather_loading_fetching">正在获取天气数据...</string>
+    <string name="weather_refresh_none">暂无刷新记录</string>
+    <string name="weather_last_refresh_time">上次刷新：%1$s</string>
 </resources>
