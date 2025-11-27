@@ -3,7 +3,13 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="gray">#FF999999</color>
-    <color name="theme_red">#FD2342</color>
+    <color name="theme_red">#FF2442</color>
     <color name="holo_red_dark">#CC0000</color>
     <color name="darker_gray">#AAAAAA</color>
+    <color name="text_primary">#333333</color>
+    <color name="text_secondary">#999999</color>
+    <color name="background_gray">#F5F5F5</color>
+    <color name="divider_line">#EEEEEE</color>
+    <color name="input_bg_gray">#F5F5F5</color>
+    <color name="text_link">#2D527C</color>
 </resources>

@@ -71,7 +71,7 @@
                     android:id="@+id/iv_like"
                     android:layout_width="20dp"
                     android:layout_height="20dp"
-                    android:src="@drawable/favorite_24dp" />
+                    android:src="@drawable/ic_favorite" />
 
                 <TextView
                     android:id="@+id/tv_like_count"

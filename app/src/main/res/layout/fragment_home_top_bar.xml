@@ -12,7 +12,7 @@
         android:id="@+id/iv_menu"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@drawable/menu_24dp"
+        android:src="@drawable/ic_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -57,7 +57,7 @@
         android:id="@+id/iv_search"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:src="@drawable/search_24dp"
+        android:src="@drawable/ic_search"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />

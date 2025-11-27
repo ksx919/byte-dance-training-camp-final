@@ -50,6 +50,10 @@
             android:name=".ui.publish.AddActivity"
             android:exported="false"
             android:theme="@style/Theme.Rednote" />
+        <activity
+            android:name=".ui.publish.ImageSelectorActivity"
+            android:exported="false"
+            android:theme="@style/Theme.Rednote" />
         
         <!-- FileProvider用于相机拍摄图片的URI共享 -->
         <provider

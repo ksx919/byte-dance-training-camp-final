@@ -52,7 +52,7 @@
             android:id="@+id/iv_add"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:src="@drawable/add_button_red"
+            android:src="@drawable/ic_add_red"
             android:adjustViewBounds="true"
             android:scaleType="fitCenter"
             android:clickable="true"

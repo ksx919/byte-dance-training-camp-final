@@ -13,7 +13,7 @@
         android:layout_width="24dp"
         android:layout_height="24dp"
         android:layout_marginTop="16dp"
-        android:src="@drawable/arrow_back"
+        android:src="@drawable/ic_arrow_back"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         tools:ignore="ContentDescription" />
@@ -36,34 +36,15 @@
         android:layout_marginTop="24dp"
         app:layout_constraintTop_toBottomOf="@+id/btn_back">
 
-        <FrameLayout
-            android:id="@+id/btn_add_image"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@drawable/bg_add_image_gray"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="+"
-                android:textColor="#999999"
-                android:textSize="40sp"
-                android:layout_gravity="center"
-                android:includeFontPadding="false"
-                android:layout_marginBottom="4dp"/>
-        </FrameLayout>
-
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_selected_images"
-            android:layout_width="wrap_content"
-            android:layout_height="100dp"
+            android:layout_width="0dp"
+            android:layout_height="80dp"
             android:orientation="horizontal"
             android:overScrollMode="never"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/btn_add_image"
+            app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             tools:listitem="@layout/item_publish_image" />

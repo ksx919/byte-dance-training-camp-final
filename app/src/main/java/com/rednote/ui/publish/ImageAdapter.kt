@@ -3,52 +3,86 @@ package com.rednote.ui.publish
 import android.net.Uri
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.rednote.databinding.ItemPublishAddBinding
 import com.rednote.databinding.ItemPublishImageBinding
 
 class ImageAdapter(
-    private val onImageDelete: (Int) -> Unit
-) : RecyclerView.Adapter<ImageAdapter.ImageViewHolder>() {
+    private val onAddClick: () -> Unit
+) : ListAdapter<Uri, RecyclerView.ViewHolder>(UriDiffCallback) {
 
-    private var imageList: List<Uri> = emptyList()
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ImageViewHolder {
-        val binding = ItemPublishImageBinding.inflate(
-            LayoutInflater.from(parent.context),
-            parent,
-            false
-        )
-        return ImageViewHolder(binding, onImageDelete)
+    companion object {
+        private const val TYPE_IMAGE = 0
+        private const val TYPE_ADD = 1
     }
 
-    override fun onBindViewHolder(holder: ImageViewHolder, position: Int) {
-        holder.bind(imageList[position], position)
+    object UriDiffCallback : DiffUtil.ItemCallback<Uri>() {
+        override fun areItemsTheSame(oldItem: Uri, newItem: Uri): Boolean {
+            // Uri 本身就是唯一的，可以直接比
+            return oldItem == newItem
+        }
+
+        override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean {
+            // 即使 URI 相同，由于位置可能改变（序号会变），
+            // 我们需要强制重新绑定来更新序号
+            return false
+        }
     }
 
-    override fun getItemCount(): Int = imageList.size
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        return if (viewType == TYPE_IMAGE) {
+            val binding = ItemPublishImageBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+            ImageViewHolder(binding)
+        } else {
+            val binding = ItemPublishAddBinding.inflate(
+                LayoutInflater.from(parent.context), parent, false
+            )
+            AddViewHolder(binding, onAddClick)
+        }
+    }
 
-    /**
-     * 更新图片列表（由ViewModel的状态驱动）
-     */
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        if (holder is ImageViewHolder) {
+            // 使用 getItem(position) 获取数据
+            holder.bind(getItem(position), position)
+        } else if (holder is AddViewHolder) {
+            holder.bind()
+        }
+    }
+
+    // 这里的数量是：真实图片数 + 1 个加号
+    override fun getItemCount(): Int = currentList.size + 1
+
+    override fun getItemViewType(position: Int): Int {
+        // 如果位置小于图片数量，则是图片；否则是最后一个加号
+        return if (position < currentList.size) TYPE_IMAGE else TYPE_ADD
+    }
+
     fun updateImages(images: List<Uri>) {
-        imageList = images
-        notifyDataSetChanged()
+        // submitList 是 ListAdapter 自带的方法
+        // 它会自动在后台计算差异，然后平滑刷新 UI
+        submitList(images)
     }
 
-    inner class ImageViewHolder(
-        private val binding: ItemPublishImageBinding,
-        private val onDelete: (Int) -> Unit
+    class ImageViewHolder(
+        private val binding: ItemPublishImageBinding
     ) : RecyclerView.ViewHolder(binding.root) {
-
         fun bind(uri: Uri, position: Int) {
-            // 加载图片（这里使用简单的设置，实际项目中应该使用图片加载库如Glide）
             binding.ivImage.setImageURI(uri)
-            
-            // 添加删除按钮点击事件
-            binding.btnDelete.setOnClickListener {
-                onDelete(position)
-            }
+            binding.tvSequence.text = (position + 1).toString()
+        }
+    }
+
+    class AddViewHolder(
+        private val binding: ItemPublishAddBinding,
+        private val onAddClick: () -> Unit
+    ) : RecyclerView.ViewHolder(binding.root) {
+        fun bind() {
+            binding.root.setOnClickListener { onAddClick() }
         }
     }
 }
-
