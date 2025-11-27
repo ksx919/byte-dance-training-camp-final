@@ -3,9 +3,9 @@ package com.rednote.ui.main.weather
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.rednote.BuildConfig
-import com.rednote.data.model.Cast
-import com.rednote.data.model.LiveWeather
-import com.rednote.data.model.WeatherResponse
+import com.rednote.data.model.weather.Cast
+import com.rednote.data.model.weather.LiveWeather
+import com.rednote.data.model.weather.WeatherResponse
 import com.rednote.data.repository.WeatherRepository
 import com.rednote.ui.base.BaseViewModel
 import kotlinx.coroutines.async
@@ -13,10 +13,10 @@ import kotlinx.coroutines.launch
 
 class WeatherViewModel : BaseViewModel() {
     // 实况天气数据
-    val liveWeatherData = MutableLiveData<LiveWeather>()
+    val liveWeatherData = MutableLiveData<LiveWeather?>()
 
     // 预测列表数据
-    val forecastData = MutableLiveData<List<Cast>>()
+    val forecastData = MutableLiveData<List<Cast>?>()
 
     // 城市名称
     val cityName = MutableLiveData<String>()
@@ -30,6 +30,9 @@ class WeatherViewModel : BaseViewModel() {
     private val repository = WeatherRepository()
     private val webApiKey = BuildConfig.AMAP_WEB_API_KEY
 
+    // 是否正在加载中
+    private var isFetching = false
+
     // 检查是否需要更新（10分钟内不重复请求）
     fun shouldUpdate(): Boolean {
         val currentTime = System.currentTimeMillis()
@@ -42,7 +45,13 @@ class WeatherViewModel : BaseViewModel() {
         lastUpdateTime = System.currentTimeMillis()
     }
 
-    fun fetchWeather(adCode: String) {
+    fun fetchWeather(adCode: String, forceRefresh: Boolean = false) {
+        if (isFetching) return // 防止并发请求
+
+        // 如果不是强制刷新，且不需要更新，则跳过
+        if (!forceRefresh && !shouldUpdate()) return
+
+        isFetching = true
         viewModelScope.launch {
             try {
                 val liveDeferred = async {
@@ -55,7 +64,9 @@ class WeatherViewModel : BaseViewModel() {
                 handleLiveResponse(liveDeferred.await())
                 handleForecastResponse(forecastDeferred.await())
             } catch (e: Exception) {
-                postError("天气数据获取失败")
+                postError("天气数据获取失败: ${e.message}")
+            } finally {
+                isFetching = false
             }
         }
     }

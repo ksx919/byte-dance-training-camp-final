@@ -1,60 +1,80 @@
 package com.rednote.ui.login
 
-import android.os.Bundle
+import android.content.Intent
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
-import androidx.fragment.app.Fragment
+import androidx.core.widget.doAfterTextChanged
+import androidx.fragment.app.viewModels
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.rednote.databinding.FragmentLoginBinding
+import com.rednote.ui.base.BaseFragment
+import com.rednote.ui.main.MainActivity
+import kotlinx.coroutines.launch
 
-class LoginFragment : Fragment() {
+class LoginFragment : BaseFragment<FragmentLoginBinding, LoginViewModel>() {
 
-    private var _binding: FragmentLoginBinding? = null
-    private val binding get() = _binding!!
+    override val viewModel: LoginViewModel by viewModels()
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-        _binding = FragmentLoginBinding.inflate(inflater, container, false)
-        return binding.root
+    override fun getViewBinding(
+        inflater: LayoutInflater,
+        container: ViewGroup?
+    ): FragmentLoginBinding {
+        return FragmentLoginBinding.inflate(inflater,container,false)
     }
 
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
+    override fun initViews() {
+        // --- 输入监听 ---
+        binding.etEmail.doAfterTextChanged { text ->
+            viewModel.updateEmail(text?.toString() ?: "")
+        }
 
-        // 1. 去注册点击事件
+        binding.etPassword.doAfterTextChanged { text ->
+            viewModel.updatePassword(text?.toString() ?: "")
+        }
+
+        // --- 点击事件 ---
         binding.tvGoRegister.setOnClickListener {
-            (activity as? LoginActivity)?.replaceFragment(RegisterFragment())
+            (activity as? LoginActivity)?.replaceFragment(RegisterFragment(), true)
         }
 
-        // 2. 关闭页面
-        binding.btnClose.setOnClickListener {
-            activity?.finish()
-        }
 
-        // 3. 登录按钮
+
         binding.btnLogin.setOnClickListener {
-            val email = binding.etEmail.text.toString()
-            val password = binding.etPassword.text.toString()
-
-            if (email.isBlank() || password.isBlank()) {
-                Toast.makeText(context, "请输入邮箱和密码", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-
-            // TODO: 调用 ViewModel 执行登录 API
-            performLoginMock(email, password)
+            viewModel.login()
         }
     }
 
-    private fun performLoginMock(email: String, pass: String) {
-        Toast.makeText(context, "登录成功", Toast.LENGTH_SHORT).show()
-        // 登录成功后跳转逻辑
-        // startActivity(Intent(activity, MainActivity::class.java))
-        // activity?.finish()
+    override fun initObservers() {
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewLifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                // 观察登录成功跳转事件
+                launch {
+                    viewModel.loginEvent.collect { event ->
+                        when (event) {
+                            is LoginUiEvent.NavigateToHome -> {
+                                Toast.makeText(context, "登录成功", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(context, MainActivity::class.java))
+                                activity?.finish()
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
-        _binding = null
+    // 6. 重写 Loading UI 逻辑
+    // 当 BaseViewModel 的 isLoading 变化时，父类会自动调用这两个方法
+    override fun showLoadingUI() {
+        binding.btnLogin.isEnabled = false
+        binding.btnLogin.text = "登录中..."
+    }
+
+    override fun hideLoadingUI() {
+        binding.btnLogin.isEnabled = true
+        binding.btnLogin.text = "登录"
     }
 }

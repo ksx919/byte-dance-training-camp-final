@@ -31,9 +31,15 @@ class RegisterFragment : Fragment() {
             val nick = binding.etNickname.text.toString()
             val email = binding.etEmail.text.toString()
             val pass = binding.etPassword.text.toString()
+            val confirmPass = binding.etConfirmPassword.text.toString()
 
-            if (nick.isBlank() || email.isBlank() || pass.isBlank()) {
+            if (nick.isBlank() || email.isBlank() || pass.isBlank() || confirmPass.isBlank()) {
                 Toast.makeText(context, "请完善注册信息", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            if (pass != confirmPass) {
+                Toast.makeText(context, "两次输入的密码不一致", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
 

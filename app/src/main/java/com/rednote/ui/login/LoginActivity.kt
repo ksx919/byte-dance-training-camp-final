@@ -1,10 +1,13 @@
 package com.rednote.ui.login
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.rednote.R
 import com.rednote.databinding.ActivityLoginBinding
+import com.rednote.ui.main.MainActivity
+import com.rednote.utils.TokenManager
 
 class LoginActivity : AppCompatActivity() {
 
@@ -12,6 +15,15 @@ class LoginActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // 检查是否已登录
+        if (TokenManager.isLoggedIn()) {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+            return
+        }
+
         binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
@@ -21,8 +33,8 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
-    fun replaceFragment(fragment: Fragment) {
-        supportFragmentManager.beginTransaction()
+    fun replaceFragment(fragment: Fragment, addToBackStack: Boolean = false) {
+        val transaction = supportFragmentManager.beginTransaction()
             .setCustomAnimations(
                 android.R.anim.fade_in,
                 android.R.anim.fade_out,
@@ -30,7 +42,11 @@ class LoginActivity : AppCompatActivity() {
                 android.R.anim.fade_out
             )
             .replace(R.id.fragment_container, fragment)
-            .addToBackStack(null) // 允许按返回键回退
-            .commit()
+        
+        if (addToBackStack) {
+            transaction.addToBackStack(null)
+        }
+        
+        transaction.commit()
     }
 }

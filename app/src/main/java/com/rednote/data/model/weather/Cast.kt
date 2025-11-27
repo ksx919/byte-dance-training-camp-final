@@ -1,4 +1,4 @@
-package com.rednote.data.model
+package com.rednote.data.model.weather
 
 data class Cast(
     val date: String,         // 日期 "2023-11-25"

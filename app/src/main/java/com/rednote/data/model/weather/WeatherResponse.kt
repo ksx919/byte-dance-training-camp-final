@@ -1,4 +1,4 @@
-package com.rednote.data.model
+package com.rednote.data.model.weather
 
 data class WeatherResponse(
     val status: String,

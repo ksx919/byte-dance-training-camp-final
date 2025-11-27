@@ -7,7 +7,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.rednote.R
-import com.rednote.data.model.FeedItem
+import com.rednote.data.model.main.FeedItem
 
 class FeedAdapter(
     private val items: List<FeedItem>

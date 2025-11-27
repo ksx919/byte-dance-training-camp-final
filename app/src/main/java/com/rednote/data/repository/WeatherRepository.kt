@@ -1,6 +1,6 @@
 package com.rednote.data.repository
 
-import com.rednote.data.model.WeatherResponse
+import com.rednote.data.model.weather.WeatherResponse
 import com.rednote.data.api.WeatherClient
 import com.rednote.data.api.WeatherApiService
 

@@ -67,6 +67,20 @@
         android:textSize="14sp"
         app:layout_constraintTop_toBottomOf="@id/et_email" />
 
+    <EditText
+        android:id="@+id/et_confirm_password"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_input_rounded"
+        android:hint="请再次输入密码"
+        android:inputType="textPassword"
+        android:paddingHorizontal="20dp"
+        android:textColor="@color/text_primary"
+        android:textColorHint="@color/text_secondary"
+        android:textSize="14sp"
+        app:layout_constraintTop_toBottomOf="@id/et_password" />
+
     <TextView
         android:id="@+id/btn_register"
         android:layout_width="match_parent"
@@ -78,6 +92,6 @@
         android:textColor="@android:color/white"
         android:textSize="16sp"
         android:textStyle="bold"
-        app:layout_constraintTop_toBottomOf="@id/et_password" />
+        app:layout_constraintTop_toBottomOf="@id/et_confirm_password" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

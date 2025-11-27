@@ -6,7 +6,7 @@ import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.rednote.R
-import com.rednote.data.model.FeedItem
+import com.rednote.data.model.main.FeedItem
 import com.rednote.databinding.FragmentContentBinding
 import com.rednote.ui.base.BaseFragment
 import com.rednote.ui.base.EmptyViewModel

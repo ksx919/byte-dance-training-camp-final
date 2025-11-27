@@ -1,6 +1,6 @@
 package com.rednote.data.api
 
-import com.rednote.data.model.WeatherResponse
+import com.rednote.data.model.weather.WeatherResponse
 import retrofit2.http.GET
 import retrofit2.http.Query
 

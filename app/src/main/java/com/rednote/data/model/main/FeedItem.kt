@@ -1,4 +1,4 @@
-package com.rednote.data.model
+package com.rednote.data.model.main
 
 data class FeedItem(
     val title: String,
@@ -7,4 +7,3 @@ data class FeedItem(
     val likeCount: Int,
     val imageRes: Int
 )
-
