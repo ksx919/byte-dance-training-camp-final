@@ -16,6 +16,7 @@ object RetrofitClient {
         }
 
         OkHttpClient.Builder()
+            .addInterceptor(AuthInterceptor())
             .addInterceptor(logging)
             .connectTimeout(15, TimeUnit.SECONDS) // 连接超时
             .readTimeout(15, TimeUnit.SECONDS)    // 读取超时
@@ -37,5 +38,9 @@ object RetrofitClient {
 
     val userApiService: UserApiService by lazy {
         retrofit.create(UserApiService::class.java)
+    }
+
+    val postApiService: PostApiService by lazy {
+        retrofit.create(PostApiService::class.java)
     }
 }

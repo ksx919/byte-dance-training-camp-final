@@ -11,7 +11,6 @@ class MeViewModel : BaseViewModel() {
         val currentUser = UserManager.getUser() ?: return
         
         // 创建更新后的 UserInfo 对象
-        // 注意：这里假设 UserInfo 是 data class，可以使用 copy
         val updatedUser = currentUser.copy(
             nickname = nickname,
             bio = bio
@@ -26,6 +25,25 @@ class MeViewModel : BaseViewModel() {
                 onSuccess()
             } else {
                 showToast(response.msg ?: "更新失败")
+            }
+        }
+    }
+
+    fun uploadAvatar(part: okhttp3.MultipartBody.Part, onSuccess: (String) -> Unit) {
+        launchDataLoad {
+            val response = RetrofitClient.userApiService.uploadAvatar(part)
+            if (response.code == 200 && response.data != null) {
+                val newAvatarUrl = response.data
+                // 更新本地缓存
+                val currentUser = UserManager.getUser()
+                if (currentUser != null) {
+                    val updatedUser = currentUser.copy(avatarUrl = newAvatarUrl)
+                    UserManager.saveUser(updatedUser)
+                }
+                showToast("头像上传成功")
+                onSuccess(newAvatarUrl)
+            } else {
+                showToast(response.msg ?: "头像上传失败")
             }
         }
     }

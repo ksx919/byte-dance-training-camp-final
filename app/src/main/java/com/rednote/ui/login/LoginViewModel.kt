@@ -65,9 +65,7 @@ class LoginViewModel : BaseViewModel() {
 
                 // 这里把 token和userInfo 保存到 MMKV 中
                 TokenManager.saveToken(token)
-                if (userInfo != null) {
-                    UserManager.saveUser(userInfo)
-                }
+                UserManager.saveUser(userInfo)
 
                 // 发送跳转事件
                 _loginEvent.send(LoginUiEvent.NavigateToHome)
