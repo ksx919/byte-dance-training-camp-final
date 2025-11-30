@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("kotlin-parcelize")
 }
 
 val localProperties = Properties()
@@ -101,4 +102,5 @@ dependencies {
     implementation("com.tencent:mmkv:2.0.2")
 
     implementation("com.github.bumptech.glide:glide:4.16.0")
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 }

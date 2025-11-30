@@ -1,5 +1,6 @@
 package com.rednote.ui.main.home
 
+import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.fragment.app.viewModels
@@ -8,6 +9,7 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.rednote.databinding.FragmentContentBinding
 import com.rednote.ui.base.BaseFragment
+import com.rednote.ui.detail.PostDetailActivity
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
@@ -49,6 +51,26 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
         }
 
         feedAdapter = FeedAdapter()
+        feedAdapter.onItemClick = { postId, _ ->
+            // 找到对应的数据项
+            val item = feedAdapter.currentList.find { it.id == postId }
+            val intent = Intent(requireContext(), PostDetailActivity::class.java)
+            intent.putExtra("POST_ID", postId)
+            
+            // 传递预加载数据
+            if (item != null) {
+                intent.putExtra("POST_TITLE", item.title)
+                intent.putExtra("POST_IMAGE", item.imageUrl)
+                intent.putExtra("POST_WIDTH", item.width)
+                intent.putExtra("POST_HEIGHT", item.height)
+                intent.putExtra("POST_AUTHOR", item.author)
+                intent.putExtra("POST_AVATAR", item.avatarUrl)
+                intent.putExtra("POST_LIKES", item.likeCount)
+            }
+            
+            // 移除共享元素动画，直接启动
+            startActivity(intent)
+        }
         binding.rvFeed.adapter = feedAdapter
 
         // 3. 滚动监听

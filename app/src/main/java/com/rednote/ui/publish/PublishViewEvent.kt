@@ -5,4 +5,5 @@ sealed interface PublishViewEvent {
     data class ShowToast(val message: String) : PublishViewEvent
     data class OpenGallery(val maxSelection: Int) : PublishViewEvent
     object PrepareCamera : PublishViewEvent
+    object Finish : PublishViewEvent
 }

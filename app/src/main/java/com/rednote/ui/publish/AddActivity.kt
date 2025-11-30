@@ -50,9 +50,9 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         setupRecyclerView()
         setupInputs()
         registerLaunchers()
-
-        // 初始布局状态
-
+        binding.btnPublishBottom.setOnClickListener {
+            viewModel.publish(this)
+        }
     }
 
     override fun initData() {
@@ -140,6 +140,9 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
                 // ViewModel 允许拍照，现在开始创建文件并打开相机
                 prepareAndLaunchCamera()
             }
+            is PublishViewEvent.Finish -> {
+                finish()
+            }
         }
     }
 
@@ -185,8 +188,6 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         // 5. 显示
         dialog.show()
     }
-
-    // --- 权限与执行部分 ---
 
     private fun checkPermissionAndAction(action: PendingAction) {
         val permissions = getRequiredPermissions(action)

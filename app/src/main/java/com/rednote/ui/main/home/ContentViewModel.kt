@@ -101,6 +101,9 @@ class ContentViewModel : BaseViewModel() {
                 } else {
                     showToast(response.msg ?: "加载失败")
                 }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                showToast("加载失败，请检查网络")
             } finally {
                 if (isRefresh) _isLoadingFlow.value = false else _isLoadingMore.value = false
             }

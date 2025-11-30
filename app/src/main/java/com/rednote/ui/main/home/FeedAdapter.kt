@@ -29,7 +29,12 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     })
 
+    // 公开当前列表数据供外部访问
+    val currentList: List<PostInfo>
+        get() = differ.currentList
+
     private var isFooterLoading = false
+    var onItemClick: ((Long, View) -> Unit)? = null
 
     companion object {
         private const val TYPE_ITEM = 0
@@ -128,17 +133,14 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         }
     }
 
-    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
-        super.onViewRecycled(holder)
-        // 如果需要清理 Glide 图片引用防止错位，可以在这里处理
-        // 但由于 FeedItemView 使用了 Diff 和 correct binding，通常不需要额外清理
-    }
-
     // --- ViewHolders ---
 
-    class FeedViewHolder(val feedView: FeedItemView) : RecyclerView.ViewHolder(feedView) {
+    inner class FeedViewHolder(val feedView: FeedItemView) : RecyclerView.ViewHolder(feedView) {
         fun bind(item: PostInfo) {
             feedView.bind(item)
+            feedView.setOnClickListener {
+                onItemClick?.invoke(item.id, feedView.ivCover)
+            }
         }
     }
 

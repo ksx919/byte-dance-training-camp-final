@@ -14,6 +14,7 @@ import android.widget.ImageView
 import androidx.core.content.ContextCompat
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.engine.DiskCacheStrategy
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 import com.rednote.R
 import com.rednote.data.model.post.PostInfo
 import com.rednote.utils.FeedUIConfig
@@ -85,17 +86,26 @@ class FeedItemView @JvmOverloads constructor(
     fun bind(item: PostInfo) {
         this.currentItem = item
 
-        // --- 图片加载 (和原来一致) ---
+        // 1. 加载封面
         if (lastCoverUrl != item.imageUrl) {
             lastCoverUrl = item.imageUrl
             if (!item.imageUrl.isNullOrEmpty()) {
-                // 计算封面实际高度用于 override，避免加载过大图片
-                val coverH = item.totalHeight - item.titleHeight - FeedUIConfig.staticContentHeight
+                // 计算目标宽高，优化 Glide 加载内存
+                val targetW = FeedUIConfig.itemWidth
+                var targetH = targetW
+                if (item.width > 0 && item.height > 0) {
+                    val ratio = item.height.toFloat() / item.width.toFloat()
+                    // 限制最大比例，与 onMeasure 保持一致
+                    val maxRatio = 1.33f
+                    val finalRatio = if (ratio > maxRatio) maxRatio else ratio
+                    targetH = (targetW * finalRatio).toInt()
+                }
+
                 Glide.with(context)
                     .load(item.imageUrl)
-                    .override(FeedUIConfig.itemWidth, coverH)
+                    .override(targetW, targetH) // 【核心优化】指定加载尺寸
                     .placeholder(cachedPlaceholder)
-                    .dontAnimate()
+                    .transition(DrawableTransitionOptions.withCrossFade()) // 【优化】渐变动画
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(ivCover)
             } else {
@@ -104,14 +114,16 @@ class FeedItemView @JvmOverloads constructor(
             }
         }
 
+        // 2. 加载头像
         if (lastAvatarUrl != item.avatarUrl) {
             lastAvatarUrl = item.avatarUrl
             if (!item.avatarUrl.isNullOrEmpty()) {
+                val size = FeedUIConfig.avatarSize
                 Glide.with(context)
                     .load(item.avatarUrl)
-                    .override(FeedUIConfig.avatarSize, FeedUIConfig.avatarSize)
+                    .override(size, size) // 【核心优化】指定加载尺寸
                     .placeholder(cachedPlaceholder)
-                    .dontAnimate()
+                    .transition(DrawableTransitionOptions.withCrossFade()) // 【优化】渐变动画
                     .circleCrop()
                     .diskCacheStrategy(DiskCacheStrategy.ALL)
                     .into(ivAvatar)
@@ -128,21 +140,37 @@ class FeedItemView @JvmOverloads constructor(
     // 【优化】O(1) 测量
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val width = MeasureSpec.getSize(widthMeasureSpec)
-        // 直接读取 ViewModel 算好的总高度
-        val totalH = currentItem?.totalHeight ?: MeasureSpec.getSize(heightMeasureSpec)
+        
+        // 1. 计算封面高度，限制最大宽高比 (例如 4:3 = 1.33)
+        // 防止长图过长，在 Feed 流中占据太多屏幕
+        val maxRatio = 1.33f // 4:3
+        val rawCoverH = currentItem?.totalHeight?.minus((currentItem?.titleHeight ?: 0) + FeedUIConfig.staticContentHeight) ?: 0
+        
+        // 计算实际封面高度：如果原图比例超过 maxRatio，则截断
+        val item = currentItem
+        var finalCoverH = rawCoverH
+        
+        if (item != null && item.width > 0 && item.height > 0) {
+             val ratio = item.height.toFloat() / item.width.toFloat()
+             if (ratio > maxRatio) {
+                 finalCoverH = (width * maxRatio).toInt()
+             }
+        }
+        
+        // 重新计算总高度
+        val finalTotalH = finalCoverH + (item?.titleHeight ?: 0) + FeedUIConfig.staticContentHeight
 
         // 测量封面
-        val coverH = totalH - (currentItem?.titleHeight ?: 0) - FeedUIConfig.staticContentHeight
         ivCover.measure(
             MeasureSpec.makeMeasureSpec(width, MeasureSpec.EXACTLY),
-            MeasureSpec.makeMeasureSpec(coverH.coerceAtLeast(0), MeasureSpec.EXACTLY)
+            MeasureSpec.makeMeasureSpec(finalCoverH.coerceAtLeast(0), MeasureSpec.EXACTLY)
         )
 
         // 测量头像
         val avatarSpec = MeasureSpec.makeMeasureSpec(FeedUIConfig.avatarSize, MeasureSpec.EXACTLY)
         ivAvatar.measure(avatarSpec, avatarSpec)
 
-        setMeasuredDimension(width, totalH)
+        setMeasuredDimension(width, finalTotalH)
     }
 
     // 极简 Layout，不涉及文字排版

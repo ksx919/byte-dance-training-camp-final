@@ -115,8 +115,34 @@ class PublishViewModel(
         _content.value = newContent
     }
 
-    fun publish() {
-        // todo 发布逻辑...
+    fun publish(context: android.content.Context) {
+        val currentTitle = _title.value
+        val currentContent = _content.value
+        val currentImages = _imageList.value
+
+        if (currentTitle.isBlank()) {
+            sendToast("请输入标题")
+            return
+        }
+        if (currentImages.isEmpty()) {
+            sendToast("请至少选择一张图片")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                val response = com.rednote.data.repository.PostRepository.publish(context, currentTitle, currentContent, currentImages)
+                if (response.code == 200 && response.data == true) {
+                    sendToast("发布成功")
+                    _viewEvent.send(PublishViewEvent.Finish)
+                } else {
+                    sendToast("发布失败: ${response.msg}")
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+                sendToast("发布出错: ${e.message}")
+            }
+        }
     }
 
     private fun sendToast(msg: String) {

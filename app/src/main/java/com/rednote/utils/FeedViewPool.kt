@@ -19,6 +19,6 @@ object FeedViewPool {
     }
 
     fun get(context: Context): FeedItemView? {
-        return pool.poll() // 如果池里有，直接拿；没有返回 null
+        return pool.poll()
     }
 }
