@@ -72,7 +72,7 @@ class LoginViewModel : BaseViewModel() {
 
             } else {
                 // 业务失败 (比如密码错误)，显示后端返回的 msg
-                showToast(response.msg ?: "登录失败，请重试")
+                showToast("登录失败，请检查账号密码")
             }
         }
     }

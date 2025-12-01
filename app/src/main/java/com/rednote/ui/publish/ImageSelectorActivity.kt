@@ -4,10 +4,12 @@ import android.Manifest
 import android.content.ContentUris
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Size
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -270,19 +272,19 @@ class ImageSelectorActivity : AppCompatActivity() {
                 lifecycleScope.launch(Dispatchers.IO) {
                     try {
                         val bitmap = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                            contentResolver.loadThumbnail(uri, android.util.Size(200, 200), null)
+                            contentResolver.loadThumbnail(uri, Size(200, 200), null)
                         } else {
                             // API 28 降级处理：简单采样
-                            val options = android.graphics.BitmapFactory.Options().apply {
+                            val options = BitmapFactory.Options().apply {
                                 inJustDecodeBounds = true
                             }
                             contentResolver.openInputStream(uri)?.use { 
-                                android.graphics.BitmapFactory.decodeStream(it, null, options) 
+                                BitmapFactory.decodeStream(it, null, options) 
                             }
                             options.inSampleSize = calculateInSampleSize(options, 200, 200)
                             options.inJustDecodeBounds = false
                             contentResolver.openInputStream(uri)?.use { 
-                                android.graphics.BitmapFactory.decodeStream(it, null, options) 
+                                BitmapFactory.decodeStream(it, null, options) 
                             }
                         }
                         
@@ -340,7 +342,7 @@ class ImageSelectorActivity : AppCompatActivity() {
             }
         }
 
-        private fun calculateInSampleSize(options: android.graphics.BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
+        private fun calculateInSampleSize(options: BitmapFactory.Options, reqWidth: Int, reqHeight: Int): Int {
             val (height: Int, width: Int) = options.outHeight to options.outWidth
             var inSampleSize = 1
             if (height > reqHeight || width > reqWidth) {

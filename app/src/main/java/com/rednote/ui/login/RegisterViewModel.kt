@@ -63,7 +63,7 @@ class RegisterViewModel : BaseViewModel() {
                 showToast("注册成功")
                 _registerEvent.send(RegisterUiEvent.RegisterSuccess)
             } else {
-                showToast(response.msg ?: "注册失败")
+                showToast("注册失败，请稍后重试")
             }
         }
     }

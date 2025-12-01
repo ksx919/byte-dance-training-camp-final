@@ -24,7 +24,7 @@ class MeViewModel : BaseViewModel() {
                 showToast("更新成功")
                 onSuccess()
             } else {
-                showToast(response.msg ?: "更新失败")
+                showToast("个人信息更新失败，请重试")
             }
         }
     }
@@ -43,7 +43,7 @@ class MeViewModel : BaseViewModel() {
                 showToast("头像上传成功")
                 onSuccess(newAvatarUrl)
             } else {
-                showToast(response.msg ?: "头像上传失败")
+                showToast("头像上传失败，请重试")
             }
         }
     }

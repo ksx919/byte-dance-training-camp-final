@@ -27,12 +27,11 @@
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_selected_images"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="80dp"
             android:orientation="horizontal"
             android:overScrollMode="never"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-            app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -49,18 +48,33 @@
 
     <EditText
         android:id="@+id/et_title"
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:layout_marginEnd="8dp"
         android:background="@null"
         android:ellipsize="end"
         android:hint="填写标题会有更多人看哦~"
+        android:maxLength="20"
         android:maxLines="2"
         android:textColor="#333333"
         android:textColorHint="#999999"
         android:textSize="18sp"
         android:textStyle="bold"
+        app:layout_constraintEnd_toStartOf="@+id/tv_title_count"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/divider1" />
+
+    <TextView
+        android:id="@+id/tv_title_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="0/20"
+        android:textColor="#CCCCCC"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="@+id/et_title"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/et_title" />
 
     <View
         android:id="@+id/divider2"
@@ -75,16 +89,28 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="8dp"
         android:background="@null"
         android:gravity="top"
         android:hint="添加正文"
         android:lineSpacingExtra="4dp"
+        android:maxLength="1000"
         android:textColor="#333333"
         android:textColorHint="#999999"
         android:textSize="15sp"
-        app:layout_constraintBottom_toTopOf="@+id/btn_publish_bottom"
+        app:layout_constraintBottom_toTopOf="@+id/tv_content_count"
         app:layout_constraintTop_toBottomOf="@+id/divider2" />
+
+    <TextView
+        android:id="@+id/tv_content_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:text="0/1000"
+        android:textColor="#CCCCCC"
+        android:textSize="12sp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_publish_bottom"
+        app:layout_constraintEnd_toEndOf="parent" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_publish_bottom"

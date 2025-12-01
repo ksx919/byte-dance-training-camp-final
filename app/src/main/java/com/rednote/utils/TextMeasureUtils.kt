@@ -2,6 +2,7 @@ package com.rednote.utils
 
 import android.content.res.Resources
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
 import android.text.StaticLayout
@@ -17,7 +18,7 @@ object TextMeasureUtils {
             isAntiAlias = true
             textSize = FeedUIConfig.titleTextSize
             color = Color.BLACK
-            // typeface = android.graphics.Typeface.DEFAULT_BOLD // 如需粗体请取消注释
+            // typeface = Typeface.DEFAULT_BOLD // 如需粗体请取消注释
         }
     }
 

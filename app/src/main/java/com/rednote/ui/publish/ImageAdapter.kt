@@ -6,8 +6,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
 import com.rednote.databinding.ItemPublishAddBinding
 import com.rednote.databinding.ItemPublishImageBinding
+import java.io.File
 
 class ImageAdapter(
     private val onAddClick: () -> Unit
@@ -20,14 +22,14 @@ class ImageAdapter(
 
     object UriDiffCallback : DiffUtil.ItemCallback<Uri>() {
         override fun areItemsTheSame(oldItem: Uri, newItem: Uri): Boolean {
-            // Uri 本身就是唯一的，可以直接比
+            // Uri 是唯一的,直接对比
             return oldItem == newItem
         }
 
         override fun areContentsTheSame(oldItem: Uri, newItem: Uri): Boolean {
-            // 即使 URI 相同，由于位置可能改变（序号会变），
-            // 我们需要强制重新绑定来更新序号
-            return false
+            // 【性能优化】这里改为 return oldItem == newItem
+            // 之前返回 false 会导致只要 List 变动,所有图片(包括没变的)都会闪烁重绘
+            return oldItem == newItem
         }
     }
 
@@ -47,24 +49,20 @@ class ImageAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         if (holder is ImageViewHolder) {
-            // 使用 getItem(position) 获取数据
             holder.bind(getItem(position), position)
         } else if (holder is AddViewHolder) {
             holder.bind()
         }
     }
 
-    // 这里的数量是：真实图片数 + 1 个加号
     override fun getItemCount(): Int = currentList.size + 1
 
     override fun getItemViewType(position: Int): Int {
-        // 如果位置小于图片数量，则是图片；否则是最后一个加号
-        return if (position < currentList.size) TYPE_IMAGE else TYPE_ADD
+        // 最后一个位置始终是 TYPE_ADD
+        return if (position == currentList.size) TYPE_ADD else TYPE_IMAGE
     }
 
     fun updateImages(images: List<Uri>) {
-        // submitList 是 ListAdapter 自带的方法
-        // 它会自动在后台计算差异，然后平滑刷新 UI
         submitList(images)
     }
 
@@ -72,7 +70,17 @@ class ImageAdapter(
         private val binding: ItemPublishImageBinding
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind(uri: Uri, position: Int) {
-            binding.ivImage.setImageURI(uri)
+            // 添加日志
+            android.util.Log.d("ImageAdapter", "bind: Loading image at position $position, URI: $uri")
+            if (uri.scheme == "file") {
+                val file = File(uri.path!!)
+                android.util.Log.d("ImageAdapter", "bind: File exists: ${file.exists()}, size: ${file.length()}")
+            }
+            
+            Glide.with(binding.root.context)
+                .load(uri)
+                .centerCrop()
+                .into(binding.ivImage)
             binding.tvSequence.text = (position + 1).toString()
         }
     }
@@ -82,6 +90,7 @@ class ImageAdapter(
         private val onAddClick: () -> Unit
     ) : RecyclerView.ViewHolder(binding.root) {
         fun bind() {
+            // 点击该按钮触发 onAddClick,在 Activity 中打开相册选择器
             binding.root.setOnClickListener { onAddClick() }
         }
     }

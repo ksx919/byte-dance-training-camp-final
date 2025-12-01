@@ -1,6 +1,7 @@
 package com.rednote.utils
 
 import android.content.Context
+import android.os.Looper
 import com.rednote.ui.main.home.FeedItemView
 import java.util.LinkedList
 
@@ -10,7 +11,7 @@ object FeedViewPool {
     // 在 Application 中调用
     fun preCreateViews(context: Context, count: Int) {
         // 注意：这里需要主线程，但利用 IdleHandler 可以不阻碍 UI
-        android.os.Looper.myQueue().addIdleHandler {
+        Looper.myQueue().addIdleHandler {
             for (i in 0 until count) {
                 pool.offer(FeedItemView(context))
             }

@@ -17,6 +17,10 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     // 使用 AsyncListDiffer 自动处理后台 Diff 计算
     private val differ = AsyncListDiffer(this, object : DiffUtil.ItemCallback<PostInfo>() {
         override fun areItemsTheSame(oldItem: PostInfo, newItem: PostInfo): Boolean {
+            // 【核心修复】优先比较 localId (用于处理本地帖子转网络帖子时的 ID 变化)
+            if (oldItem.localId != null && newItem.localId != null && oldItem.localId == newItem.localId) {
+                return true
+            }
             // 必须保证 ID 唯一且不变
             return oldItem.id == newItem.id
         }
@@ -35,6 +39,7 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     private var isFooterLoading = false
     var onItemClick: ((Long, View) -> Unit)? = null
+    var onLikeClick: ((Long, Boolean) -> Unit)? = null  // 点赞回调 (postId, newLikeState)
 
     companion object {
         private const val TYPE_ITEM = 0
@@ -49,10 +54,12 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     fun submitList(newList: List<PostInfo>, isLoading: Boolean) {
         isFooterLoading = isLoading
-        differ.submitList(newList)
-        // 仅刷新 Footer 状态，避免刷新整个列表
-        if (itemCount > 0) {
-            notifyItemChanged(itemCount - 1)
+        differ.submitList(newList) {
+            // 仅刷新 Footer 状态，避免刷新整个列表
+            // 必须在 Diff 计算完成后的回调中执行，否则 itemCount 还是旧的
+            if (itemCount > 0) {
+                notifyItemChanged(itemCount - 1)
+            }
         }
     }
 
@@ -139,7 +146,15 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         fun bind(item: PostInfo) {
             feedView.bind(item)
             feedView.setOnClickListener {
+                // 无论什么状态，都允许点击进入详情页
+                // 详情页会根据 IS_LOCAL_POST 参数自行处理（只读模式）
                 onItemClick?.invoke(item.id, feedView.ivCover)
+            }
+            feedView.onLikeClick = { postId, newLikeState ->
+                // 本地帖子不允许点赞
+                if (item.status == PostInfo.STATUS_NORMAL) {
+                    onLikeClick?.invoke(postId, newLikeState)
+                }
             }
         }
     }

@@ -101,6 +101,10 @@ dependencies {
 
     implementation("com.tencent:mmkv:2.0.2")
 
+
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation("com.github.chrisbanes:PhotoView:2.3.0")
+
+    // WorkManager
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
 }

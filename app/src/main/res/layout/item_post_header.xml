@@ -65,6 +65,35 @@
         app:layout_constraintTop_toBottomOf="@id/tvTitle"
         tools:text="是客人是朋友\n咖啡店存在的意义\n不单是一杯咖啡..." />
 
+    <!-- 3.1 正文骨架屏 (Skeleton) -->
+    <LinearLayout
+        android:id="@+id/llContentSkeleton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="@id/tvTitle"
+        app:layout_constraintStart_toStartOf="@id/tvTitle"
+        app:layout_constraintTop_toBottomOf="@id/tvTitle">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_skeleton_gray" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="16dp"
+            android:layout_marginBottom="8dp"
+            android:background="@drawable/bg_skeleton_gray" />
+
+        <View
+            android:layout_width="200dp"
+            android:layout_height="16dp"
+            android:background="@drawable/bg_skeleton_gray" />
+    </LinearLayout>
+
     <!-- 4. 发布时间/底部信息 -->
     <TextView
         android:id="@+id/tvDate"

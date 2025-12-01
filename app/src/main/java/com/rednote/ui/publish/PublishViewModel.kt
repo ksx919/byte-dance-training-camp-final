@@ -1,19 +1,26 @@
 package com.rednote.ui.publish
 
+import android.app.Application
 import android.net.Uri
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.rednote.utils.DraftManager
+import com.rednote.utils.PostUploadManager
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class PublishViewModel(
+    application: Application,
     private val savedStateHandle: SavedStateHandle
-) : ViewModel() {
+) : AndroidViewModel(application) {
 
     // --- 状态 (State) ---
     private val _imageList = MutableStateFlow<List<Uri>>(emptyList())
@@ -26,7 +33,6 @@ class PublishViewModel(
     val content: StateFlow<String> = _content.asStateFlow()
 
     // --- 一次性事件 (Events) ---
-    // 使用 Channel 处理"动作"，保证事件只被消费一次
     private val _viewEvent = Channel<PublishViewEvent>(Channel.BUFFERED)
     val viewEvent = _viewEvent.receiveAsFlow()
 
@@ -43,7 +49,6 @@ class PublishViewModel(
             sendToast("最多只能选择${MAX_IMAGE_COUNT}张图片")
             return
         }
-        // 告诉 View：去打开相册，还可以选 (9 - current) 张
         val remaining = MAX_IMAGE_COUNT - currentCount
         viewModelScope.launch {
             _viewEvent.send(PublishViewEvent.OpenGallery(remaining))
@@ -58,7 +63,6 @@ class PublishViewModel(
             sendToast("最多只能选择${MAX_IMAGE_COUNT}张图片")
             return
         }
-        // 告诉 View：去准备打开相机（需要 View 创建文件）
         viewModelScope.launch {
             _viewEvent.send(PublishViewEvent.PrepareCamera)
         }
@@ -79,20 +83,13 @@ class PublishViewModel(
         if (success && uri != null) {
             addImage(uri)
         }
-        // 无论成功失败，最好清理一下（也可保留以防万一，视需求而定）
-        // savedStateHandle.remove<Uri>(KEY_PENDING_CAMERA_URI)
     }
 
     /**
-     * 从相册选择器接收图片列表（已经过用户筛选，直接使用）
-     * ImageSelectorActivity 返回的是用户最终确定的完整列表
+     * 从相册选择器接收图片列表
      */
     fun tryAddImages(uris: List<Uri>) {
-        // ImageSelectorActivity 返回的是用户最终确定的完整列表
-        // 包括之前已选的和本次新选的，已经处理过重复问题
-        // 允许空列表（用户取消了所有选择）
         if (uris.size > MAX_IMAGE_COUNT) {
-            // 如果超过最大数量，截取前面的
             _imageList.value = uris.take(MAX_IMAGE_COUNT)
             sendToast("最多只能选择${MAX_IMAGE_COUNT}张图片")
         } else {
@@ -100,7 +97,6 @@ class PublishViewModel(
         }
     }
 
-    // 私有辅助方法：直接添加单张（不校验，内部使用）
     private fun addImage(uri: Uri) {
         val currentList = _imageList.value.toMutableList()
         currentList.add(uri)
@@ -115,7 +111,7 @@ class PublishViewModel(
         _content.value = newContent
     }
 
-    fun publish(context: android.content.Context) {
+    fun publish() {
         val currentTitle = _title.value
         val currentContent = _content.value
         val currentImages = _imageList.value
@@ -129,25 +125,96 @@ class PublishViewModel(
             return
         }
 
+        // 移交任务给 Manager (使用 Application Context)
+        PostUploadManager.publish(getApplication(), currentTitle, currentContent, currentImages)
+
+        // 发布成功，彻底清除草稿
+        clearDraft()
+
+        sendToast("正在后台发布...")
         viewModelScope.launch {
-            try {
-                val response = com.rednote.data.repository.PostRepository.publish(context, currentTitle, currentContent, currentImages)
-                if (response.code == 200 && response.data == true) {
-                    sendToast("发布成功")
-                    _viewEvent.send(PublishViewEvent.Finish)
-                } else {
-                    sendToast("发布失败: ${response.msg}")
-                }
-            } catch (e: Exception) {
-                e.printStackTrace()
-                sendToast("发布出错: ${e.message}")
-            }
+            _viewEvent.send(PublishViewEvent.Finish)
         }
     }
 
     private fun sendToast(msg: String) {
         viewModelScope.launch {
             _viewEvent.send(PublishViewEvent.ShowToast(msg))
+        }
+    }
+
+    // --- 草稿箱逻辑 (核心修复区域) ---
+
+    // 辅助判断：是否有未保存的更改（用于返回拦截）
+    fun hasUnsavedChanges(): Boolean {
+        return _title.value.isNotBlank() || _content.value.isNotBlank() || _imageList.value.isNotEmpty()
+    }
+
+    /**
+     * 如果当前页面是空的 -> 删除草稿（解决退出后草稿还在的问题）
+     * 如果当前页面有内容 -> 保存草稿（解决图片不保存的问题）
+     */
+    fun saveDraftOrClear() {
+        viewModelScope.launch {
+            // 使用 IO + NonCancellable，
+            // 确保在 Activity 关闭、进程即将被杀时，IO 操作能抢救多少是多少
+            withContext(Dispatchers.IO + NonCancellable) {
+                if (!hasUnsavedChanges()) {
+                    // 如果没内容，删草稿
+                    DraftManager.clearDraft()
+                } else {
+                    // 如果有内容，存草稿
+                    val currentTitle = _title.value
+                    val currentContent = _content.value
+                    // 必须把 List 拷贝一份传过去，防止多线程并发修改问题
+                    val currentImages = ArrayList(_imageList.value)
+
+                    DraftManager.saveDraft(currentTitle, currentContent, currentImages)
+                }
+            }
+        }
+    }
+
+    /**
+     * 单纯的保存草稿 (供 Dialog 确认保存时调用)
+     */
+    fun saveDraft() {
+        if (hasUnsavedChanges()) {
+            viewModelScope.launch {
+                withContext(Dispatchers.IO + NonCancellable) {
+                    val currentImages = ArrayList(_imageList.value)
+                    DraftManager.saveDraft(_title.value, _content.value, currentImages)
+                }
+            }
+        }
+    }
+
+    fun loadDraft() {
+        viewModelScope.launch(Dispatchers.IO) {
+            val draft = DraftManager.getDraft()
+            if (draft != null) {
+                val imageUris = DraftManager.parseImages(draft.imagesJson)
+                android.util.Log.d("PublishViewModel", "loadDraft: Found draft with ${imageUris.size} images")
+                withContext(Dispatchers.Main) {
+                    _title.value = draft.title
+                    _content.value = draft.content
+                    _imageList.value = imageUris
+                    android.util.Log.d("PublishViewModel", "loadDraft: Updated UI with ${imageUris.size} images")
+                }
+            } else {
+                android.util.Log.d("PublishViewModel", "loadDraft: No draft found")
+            }
+        }
+    }
+
+    /**
+     * 彻底清除草稿
+     */
+    fun clearDraft() {
+        viewModelScope.launch {
+            withContext(Dispatchers.IO + NonCancellable) {
+                DraftManager.clearDraft()
+            }
         }
     }
 }

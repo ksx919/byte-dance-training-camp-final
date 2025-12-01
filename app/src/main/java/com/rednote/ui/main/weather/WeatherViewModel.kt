@@ -64,7 +64,7 @@ class WeatherViewModel : BaseViewModel() {
                 handleLiveResponse(liveDeferred.await())
                 handleForecastResponse(forecastDeferred.await())
             } catch (e: Exception) {
-                postError("天气数据获取失败: ${e.message}")
+                postError("天气数据获取失败，请稍后重试")
             } finally {
                 isFetching = false
             }
@@ -78,10 +78,10 @@ class WeatherViewModel : BaseViewModel() {
                 liveWeatherData.postValue(live)
                 markUpdated()
             } else {
-                postError("未获取到实况天气数据")
+                postError("暂无实况天气数据")
             }
         } else {
-            postError("实况天气请求失败")
+            postError("实况天气加载失败，请重试")
         }
     }
 
@@ -91,10 +91,10 @@ class WeatherViewModel : BaseViewModel() {
             if (!casts.isNullOrEmpty()) {
                 forecastData.postValue(casts)
             } else {
-                postError("未获取到预报数据")
+                postError("暂无天气预报数据")
             }
         } else {
-            postError("天气预报请求失败")
+            postError("天气预报加载失败，请重试")
         }
     }
 

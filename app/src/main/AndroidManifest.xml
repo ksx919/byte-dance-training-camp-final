@@ -39,9 +39,9 @@
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:name=".RedNoteApp"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/rednote"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@drawable/rednote_start"
         android:supportsRtl="true"
         android:theme="@style/Theme.Rednote" >
 
@@ -54,12 +54,13 @@
         <activity
             android:name=".ui.publish.AddActivity"
             android:exported="false"
+            android:windowSoftInputMode="adjustResize"
             android:theme="@style/Theme.Rednote" />
         <activity
             android:name=".ui.publish.ImageSelectorActivity"
             android:exported="false"
             android:theme="@style/Theme.Rednote" />
-        
+
         <!-- FileProvider用于相机拍摄图片的URI共享 -->
         <provider
             android:name="androidx.core.content.FileProvider"
@@ -83,6 +84,7 @@
         </activity>
         <activity
             android:name=".ui.detail.PostDetailActivity"
+            android:windowSoftInputMode="adjustNothing"
             android:exported="false" />
         <activity
             android:name=".ui.detail.ImagePreviewActivity"

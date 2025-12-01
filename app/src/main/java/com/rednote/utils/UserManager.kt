@@ -12,12 +12,14 @@ object UserManager {
 
     // --- 1. 内存缓存 (Memory Cache) ---
     // App 运行期间，直接从这个变量拿数据，速度最快
+    @Volatile
     private var _cachedUser: UserInfo? = null
 
     /**
      * 获取用户信息
      * 逻辑：先看内存有没有 -> 没有就去 MMKV 找 -> 还没有就是没登录
      */
+    @Synchronized
     fun getUser(): UserInfo? {
         // 1. 命中内存缓存
         if (_cachedUser != null) {
@@ -42,6 +44,7 @@ object UserManager {
     /**
      * 保存用户信息 (登录成功后调用)
      */
+    @Synchronized
     fun saveUser(user: UserInfo) {
         // 1. 更新内存
         _cachedUser = user
@@ -53,6 +56,7 @@ object UserManager {
     /**
      * 退出登录
      */
+    @Synchronized
     fun logout() {
         // 清空内存和磁盘
         _cachedUser = null
@@ -64,6 +68,7 @@ object UserManager {
     /**
      * 内部私有方法：仅清除用户信息（内存+磁盘）
      */
+    @Synchronized
     private fun clearUser() {
         _cachedUser = null
         kv.removeValueForKey(KEY_USER_INFO)

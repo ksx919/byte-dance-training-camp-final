@@ -43,4 +43,8 @@ object RetrofitClient {
     val postApiService: PostApiService by lazy {
         retrofit.create(PostApiService::class.java)
     }
+
+    val commentApiService: CommentApiService by lazy {
+        retrofit.create(CommentApiService::class.java)
+    }
 }

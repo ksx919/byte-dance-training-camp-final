@@ -7,6 +7,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.rednote.data.model.post.PostInfo
 import com.rednote.databinding.FragmentContentBinding
 import com.rednote.ui.base.BaseFragment
 import com.rednote.ui.detail.PostDetailActivity
@@ -54,23 +55,33 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
         feedAdapter.onItemClick = { postId, _ ->
             // 找到对应的数据项
             val item = feedAdapter.currentList.find { it.id == postId }
-            val intent = Intent(requireContext(), PostDetailActivity::class.java)
-            intent.putExtra("POST_ID", postId)
-            
-            // 传递预加载数据
             if (item != null) {
+                val intent = Intent(requireContext(), PostDetailActivity::class.java)
+                intent.putExtra("POST_ID", postId)
+                
+                // 传递预加载数据
                 intent.putExtra("POST_TITLE", item.title)
-                intent.putExtra("POST_IMAGE", item.imageUrl)
+                intent.putExtra("POST_IMAGE", item.localImageUri ?: item.imageUrl)
+                if (item.content != null) intent.putExtra("POST_CONTENT", item.content)
                 intent.putExtra("POST_WIDTH", item.width)
                 intent.putExtra("POST_HEIGHT", item.height)
                 intent.putExtra("POST_AUTHOR", item.author)
                 intent.putExtra("POST_AVATAR", item.avatarUrl)
                 intent.putExtra("POST_LIKES", item.likeCount)
+
+                val isLocal = item.id < 0 || item.status != PostInfo.STATUS_NORMAL
+                intent.putExtra("IS_LOCAL_POST", isLocal)
+                
+                // 移除共享元素动画，直接启动
+                startActivity(intent)
             }
-            
-            // 移除共享元素动画，直接启动
-            startActivity(intent)
         }
+        
+        // 点赞事件处理
+        feedAdapter.onLikeClick = { postId, newLikeState ->
+            viewModel.toggleLike(postId, newLikeState)
+        }
+        
         binding.rvFeed.adapter = feedAdapter
 
         // 3. 滚动监听
@@ -78,7 +89,6 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
             override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
                 super.onScrollStateChanged(recyclerView, newState)
                 if (newState == RecyclerView.SCROLL_STATE_IDLE) {
-                    (recyclerView.layoutManager as? StaggeredGridLayoutManager)?.invalidateSpanAssignments()
                     // 停止滑动时，重置计数并强制检查一次（防止滑太快错过了）
                     scrollDistSum = 0
                     checkLoadMore(recyclerView)
@@ -115,7 +125,10 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
                 val lastPos = lastPositions.maxOrNull() ?: 0
 
                 if (lastPos >= totalCount - 8) {
-                    viewModel.loadFeed(isRefresh = false, size = 10)
+                    // 【修复】使用 post 推迟执行，避免在滚动回调中修改 Adapter 数据
+                    recyclerView.post {
+                        viewModel.loadFeed(isRefresh = false, size = 10)
+                    }
                 }
             }
         })

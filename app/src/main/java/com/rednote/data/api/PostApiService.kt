@@ -17,20 +17,29 @@ interface PostApiService {
 
     @GET("posts/feed")
     suspend fun getFeed(
-        @Query("lastId") lastId: Long? = null,
+        @Query("lastId") cursor: String? = null,
         @Query("size") size: Int = 4
     ): BaseResponse<CursorResult<PostInfo>>
 
     @Multipart
     @POST("posts/publish")
     suspend fun publish(
-        @Part("postPublishDTO") postPublishDTO: RequestBody,
+        @Part("title") title: RequestBody,
+        @Part("content") content: RequestBody,
+        @Part("imgWidth") imgWidth: RequestBody,
+        @Part("imgHeight") imgHeight: RequestBody,
         @Part files: List<MultipartBody.Part>
-    ): BaseResponse<Boolean>
+    ): BaseResponse<PostDetailVO>
 
     @GET("posts/{id}")
     suspend fun getDetail(
         @Path("id") id: Long
     ): BaseResponse<PostDetailVO>
+
+    @POST("posts/like")
+    suspend fun like(
+        @Query("targetId") targetId: Long,
+        @Query("isLike") isLike: Boolean
+    ): BaseResponse<Boolean>
 
 }

@@ -1,15 +1,25 @@
 package com.rednote.ui.publish
 
 import android.Manifest
+import android.animation.ValueAnimator
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.Environment
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
+import android.widget.Toast
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.activity.OnBackPressedCallback
 import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
@@ -18,16 +28,15 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.bottomsheet.BottomSheetDialog
+import com.rednote.R
 import com.rednote.databinding.ActivityAddBinding
 import com.rednote.ui.base.BaseActivity
+import com.rednote.utils.DraftManager
 import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import android.view.View
-import android.graphics.Color
-import com.rednote.R
 
 class AddActivity : BaseActivity<ActivityAddBinding>() {
 
@@ -41,6 +50,19 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
     private var pendingAction: PendingAction = PendingAction.NONE
     private enum class PendingAction { NONE, PICK_FROM_GALLERY, TAKE_PHOTO }
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        enableEdgeToEdge()
+        super.onCreate(savedInstanceState)
+        // 初始化草稿管理器 (建议移到 Application 中，但放在这里也可以)
+        DraftManager.init(this)
+
+        onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                handleBackPress()
+            }
+        })
+    }
+
     override fun getViewBinding(): ActivityAddBinding {
         return ActivityAddBinding.inflate(layoutInflater)
     }
@@ -51,25 +73,105 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         setupInputs()
         registerLaunchers()
         binding.btnPublishBottom.setOnClickListener {
-            viewModel.publish(this)
+            viewModel.publish()
         }
+        try {
+            val closeBtn = binding.root.findViewById<View>(R.id.btn_back)
+            closeBtn?.setOnClickListener { handleBackPress() }
+        } catch (e: Exception) {}
     }
 
     override fun initData() {
+        viewModel.loadDraft()
         observeViewModel()
     }
+
+    override fun onPause() {
+        super.onPause()
+        // 如果不是 finish() 导致的暂停（即：切后台、锁屏、跳转其他App），则执行智能保存/清理
+        // 这样可以解决：
+        // 1. 用户编辑一半切后台 -> saveDraft -> 保存成功
+        // 2. 用户清空内容切后台 -> clearDraft -> 草稿被删，下次进来是空的
+        if (!isFinishing) {
+            viewModel.saveDraftOrClear()
+        }
+    }
+
+    private fun handleBackPress() {
+        if (viewModel.hasUnsavedChanges()) {
+            showSaveDraftDialog()
+        } else {
+            // 如果没有内容，直接退出，onPause 会因为 isFinishing = true 而跳过
+            // 但为了保险起见，可以在这里也清理一下（虽然内容已经是空的了）
+            viewModel.clearDraft()
+            finish()
+        }
+    }
+
+    private fun showSaveDraftDialog() {
+        androidx.appcompat.app.AlertDialog.Builder(this)
+            .setTitle("保存草稿")
+            .setMessage("是否保存当前内容为草稿？")
+            .setPositiveButton("保存") { _, _ ->
+                // 明确用户点击保存
+                viewModel.saveDraft()
+                finish()
+            }
+            .setNegativeButton("不保存") { _, _ ->
+                // 明确用户点击不保存，清理草稿
+                viewModel.clearDraft()
+                finish()
+            }
+            .setNeutralButton("取消", null)
+            .show()
+    }
+
+    private fun setupInputs() {
+        binding.etTitle.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val content = s?.toString() ?: ""
+                viewModel.updateTitle(content)
+                binding.tvTitleCount.text = "${content.length}/20"
+            }
+        })
+
+        binding.etContent.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                val content = s?.toString() ?: ""
+                viewModel.updateContent(content)
+                binding.tvContentCount.text = "${content.length}/1000"
+            }
+        })
+    }
+
+    private var isKeyboardVisible = false
 
     private fun setupEdgeToEdge() {
         ViewCompat.setOnApplyWindowInsetsListener(binding.add) { v, insets ->
             val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+            val horizontalPadding = dpToPx(16)
+            v.setPadding(
+                systemBars.left + horizontalPadding,
+                systemBars.top,
+                systemBars.right + horizontalPadding,
+                systemBars.bottom
+            )
+
+            val isImeVisible = insets.isVisible(WindowInsetsCompat.Type.ime())
+            if (isImeVisible != isKeyboardVisible) {
+                isKeyboardVisible = isImeVisible
+                animateImagePicker(!isImeVisible)
+            }
+
             insets
         }
     }
 
     private fun setupRecyclerView() {
-
-
         imageAdapter = ImageAdapter(
             onAddClick = { showImageSourceDialog() }
         )
@@ -80,35 +182,53 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         }
     }
 
-    private fun setupInputs() {
-        binding.etTitle.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) {
-                viewModel.updateTitle(s?.toString() ?: "")
-            }
-        })
+    private fun animateImagePicker(show: Boolean) {
+        val rv = binding.rvSelectedImages
+        val layout = binding.layoutImagePicker
 
-        binding.etContent.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) {
-                viewModel.updateContent(s?.toString() ?: "")
-            }
-        })
+        rv.pivotX = 0f
+        rv.pivotY = 0f
+
+        val startScale = rv.scaleX
+        val endScale = if (show) 1f else 0.5f
+
+        val startHeight = layout.height
+        val endHeight = if (show) dpToPx(80) else dpToPx(40)
+
+        val startMargin = (layout.layoutParams as? ViewGroup.MarginLayoutParams)?.topMargin ?: 0
+        val endMargin = if (show) dpToPx(24) else dpToPx(12)
+
+        val animator = ValueAnimator.ofFloat(0f, 1f)
+        animator.duration = 300
+        animator.addUpdateListener { animation ->
+            val fraction = animation.animatedFraction
+            val newScale = startScale + (endScale - startScale) * fraction
+            rv.scaleX = newScale
+            rv.scaleY = newScale
+
+            val newHeight = (startHeight + (endHeight - startHeight) * fraction).toInt()
+            val layoutParams = layout.layoutParams
+            layoutParams.height = newHeight
+            layout.layoutParams = layoutParams
+
+            val newMargin = (startMargin + (endMargin - startMargin) * fraction).toInt()
+            val marginParams = layout.layoutParams as? ViewGroup.MarginLayoutParams
+            marginParams?.topMargin = newMargin
+            layout.layoutParams = marginParams
+        }
+        animator.start()
     }
 
-
+    private fun dpToPx(dp: Int): Int {
+        return (dp * resources.displayMetrics.density).toInt()
+    }
 
     private fun observeViewModel() {
         lifecycleScope.launch {
-            // 使用 repeatOnLifecycle 确保在后台不处理 UI 更新
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                // 1. 观察图片列表
                 launch {
                     viewModel.imageList.collect { images ->
                         imageAdapter.updateImages(images)
-
                         if (images.isNotEmpty()) {
                             binding.rvSelectedImages.post {
                                 binding.rvSelectedImages.smoothScrollToPosition(images.size - 1)
@@ -116,8 +236,20 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
                         }
                     }
                 }
-
-                // 2. 观察 View 事件 (Toast, 打开相机, 打开相册)
+                launch {
+                    viewModel.title.collect { title ->
+                        if (binding.etTitle.text.toString() != title) {
+                            binding.etTitle.setText(title)
+                        }
+                    }
+                }
+                launch {
+                    viewModel.content.collect { content ->
+                        if (binding.etContent.text.toString() != content) {
+                            binding.etContent.setText(content)
+                        }
+                    }
+                }
                 launch {
                     viewModel.viewEvent.collect { event ->
                         handleViewEvent(event)
@@ -130,14 +262,12 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
     private fun handleViewEvent(event: PublishViewEvent) {
         when (event) {
             is PublishViewEvent.ShowToast -> {
-                android.widget.Toast.makeText(this, event.message, android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, event.message, Toast.LENGTH_SHORT).show()
             }
             is PublishViewEvent.OpenGallery -> {
-                // 这里只管执行，数量限制已经在 ViewModel 计算过了
                 openGalleryInternal()
             }
             is PublishViewEvent.PrepareCamera -> {
-                // ViewModel 允许拍照，现在开始创建文件并打开相机
                 prepareAndLaunchCamera()
             }
             is PublishViewEvent.Finish -> {
@@ -146,46 +276,29 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         }
     }
 
-    /**
-     * 显示图片选择底部弹窗
-     */
     private fun showImageSourceDialog() {
-        // 1. 创建 Dialog
         val dialog = BottomSheetDialog(this)
-
-        // 2. 加载布局 (使用 R.layout 引用资源)
         val view = layoutInflater.inflate(R.layout.dialog_select_image_source, null)
         dialog.setContentView(view)
 
-        // 3. 设置背景透明 (为了显示圆角)
         try {
-            // view.parent 是 Dialog 的容器，强转为 View
             val parent = view.parent as? View
             parent?.setBackgroundColor(Color.TRANSPARENT)
         } catch (e: Exception) {
             e.printStackTrace()
         }
 
-        // 4. 绑定点击事件 (使用 findViewById)
-
-        // 按钮：拍照
         view.findViewById<TextView>(R.id.tv_take_photo).setOnClickListener {
-            dialog.dismiss() // 关闭弹窗
+            dialog.dismiss()
             checkPermissionAndAction(PendingAction.TAKE_PHOTO)
         }
-
-        // 按钮：从相册选择
         view.findViewById<TextView>(R.id.tv_pick_album).setOnClickListener {
-            dialog.dismiss() // 关闭弹窗
+            dialog.dismiss()
             checkPermissionAndAction(PendingAction.PICK_FROM_GALLERY)
         }
-
-        // 按钮：取消
         view.findViewById<TextView>(R.id.tv_cancel).setOnClickListener {
             dialog.dismiss()
         }
-
-        // 5. 显示
         dialog.show()
     }
 
@@ -195,7 +308,6 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
             performAction(action)
             return
         }
-
         val needRequest = permissions.any { checkSelfPermission(it) != PackageManager.PERMISSION_GRANTED }
         if (needRequest) {
             pendingAction = action
@@ -207,8 +319,8 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
 
     private fun performAction(action: PendingAction) {
         when (action) {
-            PendingAction.PICK_FROM_GALLERY -> viewModel.onPickImageClick() // 关键：调用 VM
-            PendingAction.TAKE_PHOTO -> viewModel.onTakePhotoClick() // 关键：调用 VM
+            PendingAction.PICK_FROM_GALLERY -> viewModel.onPickImageClick()
+            PendingAction.TAKE_PHOTO -> viewModel.onTakePhotoClick()
             else -> {}
         }
     }
@@ -216,7 +328,6 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
     private var imageSelectorLauncher: ActivityResultLauncher<Intent>? = null
 
     private fun registerLaunchers() {
-        // 1. 自定义相册选择器
         imageSelectorLauncher = registerForActivityResult(
             ActivityResultContracts.StartActivityForResult()
         ) { result ->
@@ -227,39 +338,31 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
                     @Suppress("DEPRECATION")
                     result.data?.getParcelableArrayListExtra(ImageSelectorActivity.EXTRA_RESULT_URIS)
                 }
-                
-                // 允许空列表（表示用户取消了所有选择）
                 if (uris != null) {
                     viewModel.tryAddImages(uris)
                 }
             }
         }
 
-        // 2. 相机
         cameraLauncher = registerForActivityResult(ActivityResultContracts.TakePicture()) { success ->
             viewModel.onCameraResult(success)
         }
 
-        // 3. 权限
         permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             if (permissions.all { it.value }) {
                 performAction(pendingAction)
             } else {
-                android.widget.Toast.makeText(this, "需要权限才能操作", android.widget.Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "需要权限才能操作", Toast.LENGTH_SHORT).show()
             }
             pendingAction = PendingAction.NONE
         }
     }
 
-    /**
-     * 真正的打开相册操作（由 VM Event 触发）
-     */
     private fun openGalleryInternal() {
         try {
             val intent = Intent(this, ImageSelectorActivity::class.java).apply {
                 putExtra(ImageSelectorActivity.EXTRA_CURRENT_COUNT, viewModel.imageList.value.size)
                 putExtra(ImageSelectorActivity.EXTRA_MAX_COUNT, 9)
-                // 传递已选择的图片列表
                 putParcelableArrayListExtra(ImageSelectorActivity.EXTRA_SELECTED_URIS, ArrayList(viewModel.imageList.value))
             }
             imageSelectorLauncher?.launch(intent)
@@ -268,22 +371,15 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         }
     }
 
-    /**
-     * 准备文件并打开相机（由 VM Event 触发）
-     */
     private fun prepareAndLaunchCamera() {
         try {
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val imageFile = File.createTempFile("JPEG_${timeStamp}_", ".jpg", getExternalFilesDir(Environment.DIRECTORY_PICTURES))
-
             val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", imageFile)
-
-            // 关键：将生成的 URI 传回给 VM 保存
             viewModel.setPendingCameraUri(uri)
-
             cameraLauncher.launch(uri)
         } catch (e: Exception) {
-            android.widget.Toast.makeText(this, "无法打开相机", android.widget.Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "无法打开相机", Toast.LENGTH_SHORT).show()
         }
     }
 
