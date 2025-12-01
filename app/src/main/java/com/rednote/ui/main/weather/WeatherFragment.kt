@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.activityViewModels
 import com.rednote.R
-import com.rednote.data.model.Cast
-import com.rednote.data.model.LiveWeather
+import com.rednote.data.model.weather.Cast
+import com.rednote.data.model.weather.LiveWeather
 import com.rednote.data.repository.LocationRepository
 import com.rednote.databinding.FragmentWeatherBinding
 import com.rednote.databinding.ItemForecastDayBinding
@@ -107,7 +107,8 @@ class WeatherFragment : BaseFragment<FragmentWeatherBinding, WeatherViewModel>()
                 } else {
                     binding.tvRefreshTime.text = getRefreshHint()
                 }
-                viewModel.fetchWeather(adCode)
+                // 如果是下拉刷新，则强制更新天气
+                viewModel.fetchWeather(adCode, forceRefresh = isPullToRefresh)
             },
             onError = { message ->
                 if (isPullToRefresh) {
@@ -140,7 +141,7 @@ class WeatherFragment : BaseFragment<FragmentWeatherBinding, WeatherViewModel>()
         val maxTemp = if (highTemp != null && lowTemp != null) max(highTemp, lowTemp) else null
 
         val rangeText = when {
-            minTemp != null && maxTemp != null -> "${minTemp}°~${maxTemp}°"
+            minTemp != null -> "${minTemp}°~${maxTemp}°"
             else -> "${cast.nighttemp}°~${cast.daytemp}°"
         }
 

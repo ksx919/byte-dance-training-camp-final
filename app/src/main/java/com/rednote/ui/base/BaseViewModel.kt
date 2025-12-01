@@ -29,7 +29,7 @@ abstract class BaseViewModel : ViewModel() {
                 block() // 执行具体的业务
             } catch (e: Exception) {
                 // 统一异常处理，比如网络错误
-                showToast("发生错误: ${e.message}")
+                showToast("发生未知错误，请稍后重试")
                 e.printStackTrace()
             } finally {
                 hideLoading()

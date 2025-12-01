@@ -10,9 +10,9 @@ import com.rednote.R
 import com.rednote.databinding.ActivityMainBinding
 import com.rednote.ui.base.BaseActivity
 import com.rednote.ui.main.mine.MeFragment
-import com.rednote.ui.main.message.MessageFragment
 import com.rednote.ui.main.weather.WeatherFragment
 import com.rednote.ui.main.home.HomeFragment
+import com.rednote.ui.main.home.PlaceholderFragment
 import com.rednote.ui.publish.AddActivity
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
@@ -87,7 +87,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             updateBottomNavigationState("weather")
         }
         binding.tvMessage.setOnClickListener {
-            switchToFragment(MessageFragment(), "message")
+            switchToFragment(PlaceholderFragment(), "message")
             updateBottomNavigationState("message")
         }
         binding.tvMe.setOnClickListener {
@@ -99,15 +99,25 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
         }
     }
 
-    private fun switchToFragment(fragment: Fragment, tag: String) {
+    private fun switchToFragment(targetFragment: Fragment, tag: String) {
         val fragmentManager = supportFragmentManager
         val transaction = fragmentManager.beginTransaction()
 
-        val existingFragment = fragmentManager.findFragmentByTag(tag)
-        if (existingFragment != null) {
-            transaction.replace(R.id.fragment_container, existingFragment, tag)
+        // 1. 查找目标 Fragment 是否已存在
+        var fragment = fragmentManager.findFragmentByTag(tag)
+
+        // 2. 如果当前有显示的 Fragment，先隐藏
+        if (currentFragment != null && currentFragment != fragment) {
+            transaction.hide(currentFragment!!)
+        }
+
+        if (fragment == null) {
+            // 3. 如果目标 Fragment 不存在，则添加
+            fragment = targetFragment
+            transaction.add(R.id.fragment_container, fragment, tag)
         } else {
-            transaction.replace(R.id.fragment_container, fragment, tag)
+            // 4. 如果目标 Fragment 已存在，则显示
+            transaction.show(fragment)
         }
 
         transaction.commit()

@@ -2,13 +2,13 @@
 <androidx.cardview.widget.CardView
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="100dp"
-    android:layout_height="100dp"
-    android:layout_marginEnd="8dp"
+    android:layout_width="80dp"
+    android:layout_height="80dp"
+    android:layout_marginEnd="4dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="0dp">
 
-    <FrameLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -17,19 +17,27 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:src="@color/darker_gray" />
+            android:src="@color/darker_gray"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-        <ImageView
-            android:id="@+id/btn_delete"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_gravity="top|end"
+        <TextView
+            android:id="@+id/tv_sequence"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
             android:layout_margin="4dp"
-            android:background="@android:drawable/ic_menu_delete"
-            android:backgroundTint="#CC000000"
-            android:padding="4dp"
-            android:contentDescription="删除图片" />
+            android:background="@drawable/shape_circle_sequence"
+            android:gravity="center"
+            android:includeFontPadding="false"
+            android:text="1"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
 
-    </FrameLayout>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
 </androidx.cardview.widget.CardView>
