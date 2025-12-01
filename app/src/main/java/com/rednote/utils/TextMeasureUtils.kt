@@ -2,28 +2,27 @@ package com.rednote.utils
 
 import android.content.res.Resources
 import android.graphics.Color
-import android.graphics.Typeface
 import android.os.Build
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
 import android.text.TextUtils
 import androidx.core.graphics.toColorInt
+import java.lang.ThreadLocal
 
 object TextMeasureUtils {
 
-    // 1. 标题画笔
-    private val titlePaint by lazy {
+    // 1. 标题画笔 (ThreadLocal 防止不同线程同时修改同一实例)
+    private val titlePaintTL = ThreadLocal.withInitial {
         TextPaint().apply {
             isAntiAlias = true
-            textSize = FeedUIConfig.titleTextSize
             color = Color.BLACK
             // typeface = Typeface.DEFAULT_BOLD // 如需粗体请取消注释
         }
     }
 
     // 2. 作者名画笔
-    private val authorPaint by lazy {
+    private val authorPaintTL = ThreadLocal.withInitial {
         TextPaint().apply {
             isAntiAlias = true
             textSize = 11f.spToPx // 11sp
@@ -32,13 +31,17 @@ object TextMeasureUtils {
     }
 
     // 3. 点赞数画笔
-    private val likePaint by lazy {
+    private val likePaintTL = ThreadLocal.withInitial {
         TextPaint().apply {
             isAntiAlias = true
             textSize = 11f.spToPx // 11sp
             color = Color.GRAY
         }
     }
+
+    private fun obtainTitlePaint(): TextPaint = titlePaintTL.get()!!
+    private fun obtainAuthorPaint(): TextPaint = authorPaintTL.get()!!
+    private fun obtainLikePaint(): TextPaint = likePaintTL.get()!!
 
     /**
      * 预计算标题 Layout (双行，末尾省略)
@@ -47,6 +50,7 @@ object TextMeasureUtils {
     fun preCalculateTitle(text: String, width: Int, textSize: Float): Pair<StaticLayout?, Int> {
         if (text.isEmpty()) return Pair(null, 0)
 
+        val titlePaint = obtainTitlePaint()
         // 动态更新字号，防止配置运行时变更
         titlePaint.textSize = textSize
 
@@ -76,7 +80,7 @@ object TextMeasureUtils {
 
         return createStaticLayout(
             text = text,
-            paint = authorPaint,
+            paint = obtainAuthorPaint(),
             width = maxWidth,
             maxLines = 1,
             ellipsize = TextUtils.TruncateAt.END
@@ -90,6 +94,7 @@ object TextMeasureUtils {
     fun preCalculateLike(text: String): StaticLayout? {
         if (text.isEmpty()) return null
 
+        val likePaint = obtainLikePaint()
         // 计算文字实际需要的宽度，并稍微给一点余量 (+2) 防止边缘裁剪
         val desiredWidth = likePaint.measureText(text).toInt() + 2
 

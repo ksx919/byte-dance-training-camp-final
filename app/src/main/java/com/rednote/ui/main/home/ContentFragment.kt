@@ -1,8 +1,10 @@
 package com.rednote.ui.main.home
 
+import android.app.Activity
 import android.content.Intent
 import android.view.LayoutInflater
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
@@ -19,6 +21,16 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
 
     override val viewModel: ContentViewModel by viewModels()
     private lateinit var feedAdapter: FeedAdapter
+    private val detailLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
+        val data = result.data ?: return@registerForActivityResult
+        val postId = data.getLongExtra("POST_ID", -1L)
+        if (postId == -1L) return@registerForActivityResult
+        val likeCount = data.getIntExtra("POST_LIKE_COUNT", -1)
+        if (likeCount < 0) return@registerForActivityResult
+        val isLiked = data.getBooleanExtra("POST_IS_LIKED", false)
+        viewModel.syncLikeFromDetail(postId, isLiked, likeCount)
+    }
 
     // 复用 IntArray 对象，避免在 onScrolled 中频繁 GC（针对 SpanCount=2 的情况）
     private val lastPositions = IntArray(2)
@@ -68,12 +80,13 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
                 intent.putExtra("POST_AUTHOR", item.author)
                 intent.putExtra("POST_AVATAR", item.avatarUrl)
                 intent.putExtra("POST_LIKES", item.likeCount)
+                intent.putExtra("POST_IS_LIKED", item.isLiked)
 
                 val isLocal = item.id < 0 || item.status != PostInfo.STATUS_NORMAL
                 intent.putExtra("IS_LOCAL_POST", isLocal)
                 
                 // 移除共享元素动画，直接启动
-                startActivity(intent)
+                detailLauncher.launch(intent)
             }
         }
         

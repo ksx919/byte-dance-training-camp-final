@@ -1,5 +1,6 @@
 package com.rednote.ui.detail
 
+import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -43,6 +44,10 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
     private val commentEmptyAdapter = CommentEmptyAdapter()
     private lateinit var commentAdapter: CommentAdapter // 延迟初始化以便设置回调
     private val footerAdapter = CommentFooterAdapter()
+
+    private var initialLikeStatus: Boolean? = null
+    private var initialLikeCount: Int? = null
+    private var latestPostDetail: PostDetailVO? = null
 
     override fun getViewBinding(): ActivityPostDetailBinding {
         return ActivityPostDetailBinding.inflate(layoutInflater)
@@ -94,6 +99,11 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
         binding.btnBack.setOnClickListener { finish() }
         binding.llLike.setOnClickListener { viewModel.togglePostLike() }
         binding.tvInput.setOnClickListener { showCommentDialog() }
+    }
+
+    override fun finish() {
+        prepareResultIfNeeded()
+        super.finish()
     }
 
     override fun initData() {
@@ -171,7 +181,7 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
                 authorAvatar = intent.getStringExtra("POST_AVATAR"),
                 likeCount = intent.getIntExtra("POST_LIKES", 0),
                 commentCount = 0,
-                isLiked = false
+                isLiked = intent.getBooleanExtra("POST_IS_LIKED", false)
             )
             updatePostUI(tempVO)
         }
@@ -244,6 +254,11 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
     }
 
     private fun updatePostUI(data: PostDetailVO) {
+        latestPostDetail = data
+        if (initialLikeStatus == null) {
+            initialLikeStatus = data.isLiked
+            initialLikeCount = data.likeCount
+        }
         commentAdapter.postAuthorId = data.authorId
 
         // 计算图片比例 (UI Config 逻辑)
@@ -272,6 +287,23 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
         // 作者信息
         binding.tvAuthorName.text = data.authorName
         Glide.with(this).load(data.authorAvatar).circleCrop().into(binding.ivAuthorAvatar)
+    }
+
+    private fun prepareResultIfNeeded() {
+        val initialLiked = initialLikeStatus
+        val initialLikes = initialLikeCount
+        val current = latestPostDetail
+
+        if (initialLiked == null || initialLikes == null || current == null) return
+        val changed = initialLiked != current.isLiked || initialLikes != current.likeCount
+        if (!changed) return
+
+        val resultIntent = Intent().apply {
+            putExtra("POST_ID", current.id)
+            putExtra("POST_IS_LIKED", current.isLiked)
+            putExtra("POST_LIKE_COUNT", current.likeCount)
+        }
+        setResult(Activity.RESULT_OK, resultIntent)
     }
 
     // 辅助方法：处理 Adapter 的局部刷新 (从 Activity 原逻辑搬运并简化)

@@ -34,6 +34,8 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.RequestBody
 import java.io.File
 import java.util.UUID
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 object PostUploadManager {
 
@@ -42,11 +44,15 @@ object PostUploadManager {
     private var appContext: Context? = null
     private val gson = Gson()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val dbLock = ReentrantLock()
+
+    private inline fun <T> withDbLock(block: () -> T): T = dbLock.withLock(block)
 
     // 用于 UI 观察的待发布帖子列表
     private val _pendingPosts = MutableStateFlow<List<PendingPost>>(emptyList())
     val pendingPosts: StateFlow<List<PendingPost>> = _pendingPosts.asStateFlow()
 
+    @Synchronized
     fun init(context: Context) {
         if (appContext == null) {
             appContext = context.applicationContext
@@ -59,12 +65,14 @@ object PostUploadManager {
     /**
      * 清理旧的帖子记录（成功或失败的），只保留正在上传的
      */
-    private fun cleanupOldPosts() {
-        val db = dbHelper?.writableDatabase ?: return
+    private fun cleanupOldPosts() = withDbLock {
+        val db = dbHelper?.writableDatabase ?: return@withDbLock
         try {
-            // 删除状态为 SUCCESS (2) 或 FAILED (3) 的记录
             val whereClause = "${PostDbHelper.COLUMN_STATUS} IN (?, ?)"
-            val whereArgs = arrayOf(PendingPost.STATUS_SUCCESS.toString(), PendingPost.STATUS_FAILED.toString())
+            val whereArgs = arrayOf(
+                PendingPost.STATUS_SUCCESS.toString(),
+                PendingPost.STATUS_FAILED.toString()
+            )
             db.delete(PostDbHelper.TABLE_PENDING_POSTS, whereClause, whereArgs)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to cleanup old posts", e)
@@ -140,14 +148,20 @@ object PostUploadManager {
     
     fun delete(localId: String) {
         scope.launch {
-            val db = dbHelper?.writableDatabase ?: return@launch
-            db.delete(PostDbHelper.TABLE_PENDING_POSTS, "${PostDbHelper.COLUMN_LOCAL_ID} = ?", arrayOf(localId))
-            refreshPendingPosts()
+            withDbLock {
+                val db = dbHelper?.writableDatabase ?: return@withDbLock
+                db.delete(
+                    PostDbHelper.TABLE_PENDING_POSTS,
+                    "${PostDbHelper.COLUMN_LOCAL_ID} = ?",
+                    arrayOf(localId)
+                )
+                refreshPendingPostsLocked()
+            }
         }
     }
 
-    private fun saveToDb(post: PendingPost) {
-        val db = dbHelper?.writableDatabase ?: return
+    private fun saveToDb(post: PendingPost) = withDbLock {
+        val db = dbHelper?.writableDatabase ?: return@withDbLock
         val values = ContentValues().apply {
             put(PostDbHelper.COLUMN_LOCAL_ID, post.localId)
             put(PostDbHelper.COLUMN_STATUS, post.status)
@@ -160,30 +174,34 @@ object PostUploadManager {
         db.insertWithOnConflict(PostDbHelper.TABLE_PENDING_POSTS, null, values, SQLiteDatabase.CONFLICT_REPLACE)
     }
 
-    private fun updatePostStatus(localId: String, status: Int, serverId: Long? = null, errorMsg: String? = null) {
-        val db = dbHelper?.writableDatabase ?: return
+    private fun updatePostStatus(localId: String, status: Int, serverId: Long? = null, errorMsg: String? = null) = withDbLock {
+        val db = dbHelper?.writableDatabase ?: return@withDbLock
         val values = ContentValues().apply {
             put(PostDbHelper.COLUMN_STATUS, status)
             if (serverId != null) put(PostDbHelper.COLUMN_SERVER_ID, serverId)
             if (errorMsg != null) put(PostDbHelper.COLUMN_ERROR_MSG, errorMsg)
         }
         db.update(PostDbHelper.TABLE_PENDING_POSTS, values, "${PostDbHelper.COLUMN_LOCAL_ID} = ?", arrayOf(localId))
-        refreshPendingPosts()
+        refreshPendingPostsLocked()
     }
     
-    private fun getPostFromDb(localId: String): PendingPost? {
-        val db = dbHelper?.readableDatabase ?: return null
+    private fun getPostFromDb(localId: String): PendingPost? = withDbLock {
+        val db = dbHelper?.readableDatabase ?: return@withDbLock null
         val cursor = db.query(
             PostDbHelper.TABLE_PENDING_POSTS, null,
             "${PostDbHelper.COLUMN_LOCAL_ID} = ?", arrayOf(localId),
             null, null, null
         )
-        return cursor.use {
+        return@withDbLock cursor.use {
             if (it.moveToFirst()) parseCursor(it) else null
         }
     }
 
-    private fun refreshPendingPosts() {
+    private fun refreshPendingPosts() = withDbLock {
+        refreshPendingPostsLocked()
+    }
+
+    private fun refreshPendingPostsLocked() {
         val db = dbHelper?.readableDatabase ?: return
         val cursor = db.query(
             PostDbHelper.TABLE_PENDING_POSTS, null, null, null, null, null, 

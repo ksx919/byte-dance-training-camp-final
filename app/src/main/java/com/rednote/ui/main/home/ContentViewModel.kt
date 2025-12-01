@@ -288,4 +288,17 @@ class ContentViewModel : BaseViewModel() {
             }
         }
     }
+
+    /**
+     * 详情页返回后的点赞同步
+     */
+    fun syncLikeFromDetail(postId: Long, isLiked: Boolean, likeCount: Int) {
+        val currentMap = _localLikeUpdates.value.toMutableMap()
+        val existing = currentMap[postId]
+        if (existing?.first == isLiked && existing.second == likeCount) {
+            return
+        }
+        currentMap[postId] = Pair(isLiked, likeCount)
+        _localLikeUpdates.value = currentMap
+    }
 }

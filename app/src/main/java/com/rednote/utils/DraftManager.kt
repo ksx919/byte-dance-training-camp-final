@@ -8,6 +8,8 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.rednote.data.db.DraftDbHelper
 import com.rednote.data.model.Draft
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 
 object DraftManager {
 
@@ -15,7 +17,11 @@ object DraftManager {
     private var dbHelper: DraftDbHelper? = null
     private var appContext: Context? = null
     private val gson = Gson()
+    private val dbLock = ReentrantLock()
 
+    private inline fun <T> withDbLock(block: () -> T): T = dbLock.withLock(block)
+
+    @Synchronized
     fun init(context: Context) {
         // 只有未初始化时才赋值,防止重复覆盖
         if (appContext == null) {
@@ -37,57 +43,59 @@ object DraftManager {
         }
 
         try {
-            val db = dbHelper?.writableDatabase ?: return
+            withDbLock {
+                val db = dbHelper?.writableDatabase ?: return@withDbLock
 
-            Log.d(TAG, "saveDraft: Starting save. Title: $title, Image count: ${originalImages.size}")
-            originalImages.forEachIndexed { index, uri ->
-                Log.d(TAG, "saveDraft: Original image[$index]: $uri")
+                Log.d(TAG, "saveDraft: Starting save. Title: $title, Image count: ${originalImages.size}")
+                originalImages.forEachIndexed { index, uri ->
+                    Log.d(TAG, "saveDraft: Original image[$index]: $uri")
+                }
+
+                val imageStrings = originalImages.map { it.toString() }
+                val imagesJson = gson.toJson(imageStrings)
+
+                Log.d(TAG, "saveDraft: ImagesJson to save: $imagesJson")
+
+                val values = ContentValues().apply {
+                    put(DraftDbHelper.COLUMN_ID, 1)
+                    put(DraftDbHelper.COLUMN_TITLE, title)
+                    put(DraftDbHelper.COLUMN_CONTENT, content)
+                    put(DraftDbHelper.COLUMN_IMAGES, imagesJson)
+                    put(DraftDbHelper.COLUMN_UPDATED_AT, System.currentTimeMillis())
+                }
+
+                db.replace(DraftDbHelper.TABLE_DRAFTS, null, values)
+                Log.d(TAG, "saveDraft: Success. Saved ${originalImages.size} images.")
             }
-
-            // 直接保存原始 URI,不复制图片
-            val imageStrings = originalImages.map { it.toString() }
-            val imagesJson = gson.toJson(imageStrings)
-
-            Log.d(TAG, "saveDraft: ImagesJson to save: $imagesJson")
-
-            val values = ContentValues().apply {
-                put(DraftDbHelper.COLUMN_ID, 1) // 始终使用 ID 1,保持单条草稿
-                put(DraftDbHelper.COLUMN_TITLE, title)
-                put(DraftDbHelper.COLUMN_CONTENT, content)
-                put(DraftDbHelper.COLUMN_IMAGES, imagesJson)
-                put(DraftDbHelper.COLUMN_UPDATED_AT, System.currentTimeMillis())
-            }
-
-            db.replace(DraftDbHelper.TABLE_DRAFTS, null, values)
-            Log.d(TAG, "saveDraft: Success. Saved ${originalImages.size} images.")
         } catch (e: Exception) {
             Log.e(TAG, "saveDraft: Error occurred", e)
         }
     }
 
     fun getDraft(): Draft? {
-        val db = dbHelper?.readableDatabase ?: return null
         return try {
-            val cursor = db.query(
-                DraftDbHelper.TABLE_DRAFTS, null, "${DraftDbHelper.COLUMN_ID} = ?",
-                arrayOf("1"), null, null, null
-            )
-            cursor.use {
-                if (it.moveToFirst()) {
-                    val title = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_TITLE))
-                    val content = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_CONTENT))
-                    val imagesJson = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_IMAGES))
-                    val updatedAt = it.getLong(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_UPDATED_AT))
-                    Log.d(TAG, "getDraft: Found draft. Title: $title, ImagesJson: $imagesJson")
-                    Draft(1, title, content, imagesJson, updatedAt)
-                } else {
-                    Log.d(TAG, "getDraft: No draft found")
-                    null
+            withDbLock {
+                val db = dbHelper?.readableDatabase ?: return@withDbLock null
+                val cursor = db.query(
+                    DraftDbHelper.TABLE_DRAFTS, null, "${DraftDbHelper.COLUMN_ID} = ?",
+                    arrayOf("1"), null, null, null
+                )
+                cursor.use {
+                    if (it.moveToFirst()) {
+                        val title = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_TITLE))
+                        val content = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_CONTENT))
+                        val imagesJson = it.getString(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_IMAGES))
+                        val updatedAt = it.getLong(it.getColumnIndexOrThrow(DraftDbHelper.COLUMN_UPDATED_AT))
+                        Log.d(TAG, "getDraft: Found draft. Title: $title, ImagesJson: $imagesJson")
+                        Draft(1, title, content, imagesJson, updatedAt)
+                    } else {
+                        Log.d(TAG, "getDraft: No draft found")
+                        null
+                    }
                 }
             }
         } catch (e: Exception) {
             Log.e(TAG, "getDraft: Error occurred", e)
-            e.printStackTrace()
             null
         }
     }
@@ -120,13 +128,14 @@ object DraftManager {
     }
 
     fun clearDraft() {
-        val db = dbHelper?.writableDatabase ?: return
-        try {
-            // 删除数据库记录
-            db.delete(DraftDbHelper.TABLE_DRAFTS, "${DraftDbHelper.COLUMN_ID} = ?", arrayOf("1"))
-            Log.d(TAG, "Draft cleared.")
-        } catch (e: Exception) {
-            e.printStackTrace()
+        withDbLock {
+            val db = dbHelper?.writableDatabase ?: return@withDbLock
+            try {
+                db.delete(DraftDbHelper.TABLE_DRAFTS, "${DraftDbHelper.COLUMN_ID} = ?", arrayOf("1"))
+                Log.d(TAG, "Draft cleared.")
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
         }
     }
 

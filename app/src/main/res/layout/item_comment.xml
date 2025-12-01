@@ -109,10 +109,12 @@
 
         <LinearLayout
             android:id="@+id/ll_expand_replies"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginStart="32dp"
             android:layout_marginTop="8dp"
+            android:paddingVertical="8dp"
+            android:paddingEnd="8dp"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:visibility="gone"

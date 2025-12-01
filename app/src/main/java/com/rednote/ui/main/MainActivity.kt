@@ -13,6 +13,7 @@ import com.rednote.ui.main.mine.MeFragment
 import com.rednote.ui.main.message.MessageFragment
 import com.rednote.ui.main.weather.WeatherFragment
 import com.rednote.ui.main.home.HomeFragment
+import com.rednote.ui.main.home.PlaceholderFragment
 import com.rednote.ui.publish.AddActivity
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
@@ -87,7 +88,7 @@ class MainActivity : BaseActivity<ActivityMainBinding>() {
             updateBottomNavigationState("weather")
         }
         binding.tvMessage.setOnClickListener {
-            switchToFragment(MessageFragment(), "message")
+            switchToFragment(PlaceholderFragment(), "message")
             updateBottomNavigationState("message")
         }
         binding.tvMe.setOnClickListener {
