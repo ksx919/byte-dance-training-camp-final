@@ -16,7 +16,6 @@ class FixedSizeImageView @JvmOverloads constructor(
 ) : AppCompatImageView(context, attrs, defStyleAttr) {
 
     override fun requestLayout() {
-        // 【核心黑科技】
         // 如果当前 View 已经经历过 layout 并且大小确定，
         // 我们就拦截 requestLayout，防止它向父 View 传播，造成连锁反应。
         // 除非显式调用 forceLayout()，否则这里直接吞掉。

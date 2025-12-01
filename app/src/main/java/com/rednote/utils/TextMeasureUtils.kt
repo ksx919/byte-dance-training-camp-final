@@ -54,7 +54,7 @@ object TextMeasureUtils {
         // 动态更新字号，防止配置运行时变更
         titlePaint.textSize = textSize
 
-        // 【关键】减去左右 Padding，否则文字会画出圆角边界
+        // 减去左右 Padding，否则文字会画出圆角边界
         val contentWidth = width - (FeedUIConfig.padding * 2)
 
         val layout = createStaticLayout(

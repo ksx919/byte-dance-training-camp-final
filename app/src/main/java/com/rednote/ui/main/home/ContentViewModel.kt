@@ -74,7 +74,7 @@ class ContentViewModel : BaseViewModel() {
     /**
      * 合并本地和网络帖子
      */
-    private suspend fun mergePosts(
+    private fun mergePosts(
         pendingList: List<PendingPost>,
         serverList: List<PostInfo>,
         likeUpdates: Map<Long, Pair<Boolean, Int>>

@@ -1,6 +1,5 @@
 package com.rednote.ui.detail
 
-import android.app.Activity
 import android.content.Intent
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -20,10 +19,8 @@ import com.rednote.databinding.ActivityPostDetailBinding
 import com.rednote.ui.base.BaseActivity
 import com.rednote.utils.CommentLayoutCalculator
 import com.rednote.utils.CommentUIConfig
-import com.rednote.utils.FeedUIConfig
 import com.rednote.utils.ImageSizeUtils
 import com.rednote.utils.UserManager
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -303,7 +300,7 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
             putExtra("POST_IS_LIKED", current.isLiked)
             putExtra("POST_LIKE_COUNT", current.likeCount)
         }
-        setResult(Activity.RESULT_OK, resultIntent)
+        setResult(RESULT_OK, resultIntent)
     }
 
     // 辅助方法：处理 Adapter 的局部刷新 (从 Activity 原逻辑搬运并简化)
@@ -408,6 +405,6 @@ class PostDetailActivity : BaseActivity<ActivityPostDetailBinding>() {
             val tempFile = File.createTempFile("upload", ".jpg", cacheDir)
             tempFile.outputStream().use { inputStream.copyTo(it) }
             return tempFile
-        } catch (e: Exception) { return null }
+        } catch (_: Exception) { return null }
     }
 }

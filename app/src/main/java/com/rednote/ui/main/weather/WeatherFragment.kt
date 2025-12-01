@@ -141,7 +141,7 @@ class WeatherFragment : BaseFragment<FragmentWeatherBinding, WeatherViewModel>()
         val maxTemp = if (highTemp != null && lowTemp != null) max(highTemp, lowTemp) else null
 
         val rangeText = when {
-            minTemp != null && maxTemp != null -> "${minTemp}°~${maxTemp}°"
+            minTemp != null -> "${minTemp}°~${maxTemp}°"
             else -> "${cast.nighttemp}°~${cast.daytemp}°"
         }
 

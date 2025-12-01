@@ -63,7 +63,7 @@ class WeatherViewModel : BaseViewModel() {
 
                 handleLiveResponse(liveDeferred.await())
                 handleForecastResponse(forecastDeferred.await())
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 postError("天气数据获取失败，请稍后重试")
             } finally {
                 isFetching = false

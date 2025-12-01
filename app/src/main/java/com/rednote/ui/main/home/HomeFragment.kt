@@ -16,14 +16,11 @@ class HomeFragment : BaseFragment<FragmentHomeBinding, EmptyViewModel>() {
     }
 
     override fun initViews() {
-        // TODO: 初始化首页的UI组件
     }
 
     override fun initObservers() {
-        // TODO: 观察ViewModel的数据变化
     }
 
     override fun initData() {
-        // TODO: 加载首页数据
     }
 }

@@ -43,7 +43,6 @@ object CommentUIConfig {
         screenWidth = metrics.widthPixels
         density = metrics.density
 
-        // 1. Basic Dimensions from item_comment.xml
         paddingStart = dp2px(16f)
         paddingEnd = dp2px(16f)
         paddingTop = dp2px(12f)
@@ -59,7 +58,6 @@ object CommentUIConfig {
         
         replyContainerMarginTop = dp2px(8f)
 
-        // 2. Text Configuration
         contentTextSize = TypedValue.applyDimension(
             TypedValue.COMPLEX_UNIT_SP, 15f, metrics
         )
@@ -68,19 +66,13 @@ object CommentUIConfig {
         textPaint.textSize = contentTextSize
         textPaint.isAntiAlias = true
 
-        // 3. Calculate Available Width for Content
         val contentStart = paddingStart + avatarSize + avatarMarginStart
         val contentEnd = paddingEnd + likeContainerWidth + contentMarginEnd
         
         contentAvailableWidth = screenWidth - contentStart - contentEnd
-        
-        // 4. Calculate Available Width for Reply Content
-        // ll_reply_container width = Screen - contentStart - paddingEnd
+
         val replyContainerWidth = screenWidth - contentStart - paddingEnd
-        
-        // item_comment_reply.xml:
-        // Content Start = 24dp (avatar) + 8dp (margin) = 32dp
-        // Content End = 16dp (margin) + LikeContainer (approx 30dp)
+
         val replyContentStart = dp2px(32f)
         val replyContentEnd = dp2px(16f) + dp2px(30f)
         

@@ -19,7 +19,7 @@ object FeedViewPool {
         }
     }
 
-    fun get(context: Context): FeedItemView? {
+    fun get(): FeedItemView? {
         return pool.poll()
     }
 }

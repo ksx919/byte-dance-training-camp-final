@@ -23,10 +23,27 @@ class PostHeaderAdapter : RecyclerView.Adapter<PostHeaderAdapter.HeaderViewHolde
     private var thumbHeight: Int = 0
 
     fun setPostData(data: PostDetailVO, tWidth: Int = 0, tHeight: Int = 0) {
+        val oldList = if (postData != null) listOf(postData!!) else emptyList()
+        val newList = listOf(data)
+
+        val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(object : androidx.recyclerview.widget.DiffUtil.Callback() {
+            override fun getOldListSize(): Int = oldList.size
+            override fun getNewListSize(): Int = newList.size
+
+            override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition].id == newList[newItemPosition].id
+            }
+
+            override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                return oldList[oldItemPosition] == newList[newItemPosition]
+            }
+        })
+        
         this.postData = data
         this.thumbWidth = tWidth
         this.thumbHeight = tHeight
-        notifyDataSetChanged()
+        
+        diffResult.dispatchUpdatesTo(this)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HeaderViewHolder {
@@ -44,7 +61,7 @@ class PostHeaderAdapter : RecyclerView.Adapter<PostHeaderAdapter.HeaderViewHolde
             tvTitle.text = post.title
             
             // 骨架屏逻辑
-            if (post.content.isNullOrEmpty()) {
+            if (post.content.isEmpty()) {
                 // 初始状态：显示骨架，隐藏内容
                 llContentSkeleton.visibility = View.VISIBLE
                 tvContent.visibility = View.GONE
@@ -62,14 +79,14 @@ class PostHeaderAdapter : RecyclerView.Adapter<PostHeaderAdapter.HeaderViewHolde
 
             try {
                 // 如果时间为空，暂时隐藏或显示默认
-                if (post.createdAt.isNullOrEmpty()) {
+                if (post.createdAt.isEmpty()) {
                      tvDate.text = ""
                 } else {
                     val date = LocalDateTime.parse(post.createdAt)
                     val formatter = DateTimeFormatter.ofPattern("MM-dd")
                     tvDate.text = "编辑于 ${date.format(formatter)}"
                 }
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 tvDate.text = "编辑于 ${post.createdAt}"
             }
 

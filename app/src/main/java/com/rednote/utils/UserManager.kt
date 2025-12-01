@@ -33,7 +33,7 @@ object UserManager {
                 // 3. 反序列化为对象，并回填内存缓存
                 _cachedUser = gson.fromJson(json, UserInfo::class.java)
                 return _cachedUser
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 // 异常处理：比如数据结构变了导致解析失败，干脆清空
                 clearUser()
             }

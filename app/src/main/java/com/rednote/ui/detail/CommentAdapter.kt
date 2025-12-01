@@ -197,7 +197,7 @@ class CommentAdapter(
             }
 
             // 【优化】头像缩略图
-            val avatarUrl = getThumbnailUrl(comment.avatarUrl ?: "", 100)
+            val avatarUrl = getThumbnailUrl(comment.avatarUrl, 100)
             Glide.with(holder.itemView)
                 .load(avatarUrl)
                 .circleCrop()
@@ -355,7 +355,7 @@ class CommentAdapter(
                     }
 
                     // 【优化】头像缩略图
-                    val avatarUrl = getThumbnailUrl(reply.avatarUrl ?: "", 100)
+                    val avatarUrl = getThumbnailUrl(reply.avatarUrl, 100)
                     Glide.with(holder.itemView)
                         .load(avatarUrl)
                         .circleCrop()

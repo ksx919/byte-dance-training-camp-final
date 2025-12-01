@@ -47,7 +47,6 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
     }
 
     init {
-        // 【核心优化】开启 StableIds
         // 这对 StaggeredGridLayoutManager 至关重要，防止 item 刷新时位置乱跳
         setHasStableIds(true)
     }
@@ -102,7 +101,7 @@ class FeedAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
         // --- 2. 创建 Item (核心优化) ---
 
         // A. 优先从自定义缓存池获取 View，减少 new 对象开销
-        val view = FeedViewPool.get(parent.context) ?: FeedItemView(parent.context)
+        val view = FeedViewPool.get() ?: FeedItemView(parent.context)
 
         // B. 初始化 LayoutParams 并设置间距
         val params = StaggeredGridLayoutManager.LayoutParams(

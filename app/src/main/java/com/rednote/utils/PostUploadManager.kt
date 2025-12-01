@@ -15,7 +15,6 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.rednote.data.api.RetrofitClient
 import com.rednote.data.db.PostDbHelper
 import com.rednote.data.model.post.PendingPost
@@ -31,11 +30,11 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
-import okhttp3.RequestBody
 import java.io.File
 import java.util.UUID
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import androidx.core.net.toUri
 
 object PostUploadManager {
 
@@ -121,44 +120,6 @@ object PostUploadManager {
             Log.d(TAG, "Upload work enqueued for localId: $localId")
         }
     }
-    
-    fun retry(context: Context, localId: String) {
-        init(context)
-        scope.launch {
-            val post = getPostFromDb(localId) ?: return@launch
-            // 重置状态
-            updatePostStatus(localId, PendingPost.STATUS_PENDING)
-            
-            val constraints = Constraints.Builder()
-                .setRequiredNetworkType(NetworkType.CONNECTED)
-                .build()
-
-            val inputData = Data.Builder()
-                .putString("localId", localId)
-                .build()
-
-            val uploadWorkRequest = OneTimeWorkRequestBuilder<UploadWorker>()
-                .setConstraints(constraints)
-                .setInputData(inputData)
-                .build()
-
-            WorkManager.getInstance(context).enqueue(uploadWorkRequest)
-        }
-    }
-    
-    fun delete(localId: String) {
-        scope.launch {
-            withDbLock {
-                val db = dbHelper?.writableDatabase ?: return@withDbLock
-                db.delete(
-                    PostDbHelper.TABLE_PENDING_POSTS,
-                    "${PostDbHelper.COLUMN_LOCAL_ID} = ?",
-                    arrayOf(localId)
-                )
-                refreshPendingPostsLocked()
-            }
-        }
-    }
 
     private fun saveToDb(post: PendingPost) = withDbLock {
         val db = dbHelper?.writableDatabase ?: return@withDbLock
@@ -232,7 +193,7 @@ object PostUploadManager {
             val list = mutableListOf<String>()
             jsonArray.forEach { list.add(it.asString) }
             list
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             emptyList()
         }
 
@@ -265,7 +226,7 @@ object PostUploadManager {
                 updatePostStatus(localId, PendingPost.STATUS_UPLOADING)
 
                 // 3. 准备文件
-                val imageUris = post.imageUris.map { Uri.parse(it) }
+                val imageUris = post.imageUris.map { it.toUri() }
                 val files = imageUris.mapNotNull { uri ->
                     try {
                         uriToFile(applicationContext, uri)

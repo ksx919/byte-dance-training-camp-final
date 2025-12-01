@@ -3,11 +3,12 @@ package com.rednote.ui.widget
 import android.animation.ValueAnimator
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
 import android.view.animation.LinearInterpolator
+import androidx.core.graphics.toColorInt
+import androidx.core.graphics.withRotation
 
 /**
  * 仿小红书风格的极简加载 View
@@ -20,9 +21,9 @@ class RedNoteLoadingView @JvmOverloads constructor(
 ) : View(context, attrs, defStyleAttr) {
 
     // 主色调：小红书红
-    private val colorRed = Color.parseColor("#FF2442")
+    private val colorRed = "#FF2442".toColorInt()
     // 浅色调：可以用半透明红，或者稍微浅一点的粉
-    private val colorPink = Color.parseColor("#FF899E")
+    private val colorPink = "#FF899E".toColorInt()
 
     private val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         style = Paint.Style.FILL
@@ -35,10 +36,6 @@ class RedNoteLoadingView @JvmOverloads constructor(
     // 尺寸配置 (dp)
     private var dotRadius = 0f // 圆点半径
     private var orbitRadius = 0f // 旋转轨道半径
-
-    init {
-        // 确保 View 有固定的大小，如果 XML 没设，这里可以兜底，但在 onSizeChanged 计算更好
-    }
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
@@ -56,21 +53,19 @@ class RedNoteLoadingView @JvmOverloads constructor(
         val cy = height / 2f
 
         // 保存画布状态
-        canvas.save()
+        canvas.withRotation(rotationAngle, cx, cy) {
 
-        // 旋转画布
-        canvas.rotate(rotationAngle, cx, cy)
+            // 旋转画布
+            // 画左边的圆点 (深红)
+            paint.color = colorRed
+            drawCircle(cx - orbitRadius, cy, dotRadius, paint)
 
-        // 画左边的圆点 (深红)
-        paint.color = colorRed
-        canvas.drawCircle(cx - orbitRadius, cy, dotRadius, paint)
+            // 画右边的圆点 (浅红/粉)
+            paint.color = colorPink
+            drawCircle(cx + orbitRadius, cy, dotRadius, paint)
 
-        // 画右边的圆点 (浅红/粉)
-        paint.color = colorPink
-        canvas.drawCircle(cx + orbitRadius, cy, dotRadius, paint)
-
-        // 恢复画布
-        canvas.restore()
+            // 恢复画布
+        }
     }
 
     private fun startAnim() {

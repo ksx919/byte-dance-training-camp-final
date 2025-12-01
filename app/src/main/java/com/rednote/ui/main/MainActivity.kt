@@ -10,7 +10,6 @@ import com.rednote.R
 import com.rednote.databinding.ActivityMainBinding
 import com.rednote.ui.base.BaseActivity
 import com.rednote.ui.main.mine.MeFragment
-import com.rednote.ui.main.message.MessageFragment
 import com.rednote.ui.main.weather.WeatherFragment
 import com.rednote.ui.main.home.HomeFragment
 import com.rednote.ui.main.home.PlaceholderFragment

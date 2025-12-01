@@ -16,14 +16,11 @@ class MessageFragment : BaseFragment<FragmentMessageBinding, EmptyViewModel>() {
     }
 
     override fun initViews() {
-        // TODO: 初始化消息页面的UI组件
     }
 
     override fun initObservers() {
-        // TODO: 观察ViewModel的数据变化
     }
 
     override fun initData() {
-        // TODO: 加载消息数据
     }
 }

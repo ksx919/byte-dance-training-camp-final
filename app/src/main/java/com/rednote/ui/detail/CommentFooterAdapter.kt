@@ -39,9 +39,9 @@ class CommentFooterAdapter : RecyclerView.Adapter<CommentFooterAdapter.FooterVie
             val oldState = currentState
             currentState = state
             
-            if (oldState == STATE_HIDDEN && state != STATE_HIDDEN) {
+            if (oldState == STATE_HIDDEN) {
                 notifyItemInserted(0)
-            } else if (oldState != STATE_HIDDEN && state == STATE_HIDDEN) {
+            } else if (state == STATE_HIDDEN) {
                 notifyItemRemoved(0)
             } else {
                 notifyItemChanged(0)

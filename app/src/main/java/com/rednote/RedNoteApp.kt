@@ -1,11 +1,8 @@
 package com.rednote
 
 import android.app.Application
-import android.util.Log
 import androidx.appcompat.view.ContextThemeWrapper
-import androidx.core.content.ContentProviderCompat.requireContext
 import com.bumptech.glide.Glide
-import com.rednote.R
 import com.rednote.utils.CommentUIConfig
 import com.rednote.utils.DraftManager
 import com.rednote.utils.FeedUIConfig

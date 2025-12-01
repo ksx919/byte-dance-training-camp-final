@@ -20,7 +20,7 @@ class LocationRepository {
             if (locationClient == null) {
                 locationClient = AMapLocationClient(context.applicationContext)
             }
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             postToMain { onError("定位初始化失败") }
             return
         }
@@ -54,9 +54,9 @@ class LocationRepository {
         } ?: postToMain { onError("定位客户端不可用") }
     }
 
-    fun stop() {
-        locationClient?.stopLocation()
-    }
+//    fun stop() {
+//        locationClient?.stopLocation()
+//    }
 
     fun release() {
         locationClient?.onDestroy()

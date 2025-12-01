@@ -22,9 +22,9 @@ object CommentLayoutCalculator {
         
         // Use StaticLayout for accurate height including font padding
         val usernameLayout = StaticLayout.Builder.obtain(
-            comment.nickname ?: "",
+            comment.nickname,
             0,
-            (comment.nickname ?: "").length,
+            comment.nickname.length,
             textPaint,
             CommentUIConfig.contentAvailableWidth // Username has same width constraint roughly
         )
@@ -130,9 +130,9 @@ object CommentLayoutCalculator {
         textPaint.textSize = usernameSize
         
         val usernameLayout = StaticLayout.Builder.obtain(
-            reply.nickname ?: "User",
+            reply.nickname,
             0,
-            (reply.nickname ?: "User").length,
+            reply.nickname.length,
             textPaint,
             CommentUIConfig.replyContentAvailableWidth
         )

@@ -66,7 +66,7 @@ class MeFragment : BaseFragment<FragmentMeBinding, MeViewModel>() {
         if (user != null) {
             binding.tvNickname.text = user.nickname
             binding.tvRedId.text = "小红书号：${user.id}"
-            binding.tvBio.text = if (user.bio.isNullOrEmpty()) "暂时还没有简介" else user.bio
+            binding.tvBio.text = user.bio.ifEmpty { "暂时还没有简介" }
             
             // 加载头像
             loadAvatar(user.avatarUrl)

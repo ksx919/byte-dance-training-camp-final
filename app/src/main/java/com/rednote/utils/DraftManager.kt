@@ -10,6 +10,7 @@ import com.rednote.data.db.DraftDbHelper
 import com.rednote.data.model.Draft
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
+import androidx.core.net.toUri
 
 object DraftManager {
 
@@ -115,7 +116,7 @@ object DraftManager {
             }
             
             // 将字符串重新解析为 Uri
-            val uris = strings.map { Uri.parse(it) }
+            val uris = strings.map { it.toUri() }
             Log.d(TAG, "parseImages: Parsed ${uris.size} URIs")
             uris.forEachIndexed { index, uri ->
                 Log.d(TAG, "parseImages[$index]: $uri (scheme: ${uri.scheme})")
@@ -139,7 +140,4 @@ object DraftManager {
         }
     }
 
-    fun hasDraft(): Boolean {
-        return getDraft() != null
-    }
 }

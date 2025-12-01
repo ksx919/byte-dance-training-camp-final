@@ -231,8 +231,21 @@ class ImageSelectorActivity : AppCompatActivity() {
         private var previouslySelectedUris = mutableSetOf<Uri>()
 
         fun submitList(newImages: List<Uri>) {
+            val oldImages = images
+            val diffResult = androidx.recyclerview.widget.DiffUtil.calculateDiff(object : androidx.recyclerview.widget.DiffUtil.Callback() {
+                override fun getOldListSize(): Int = oldImages.size
+                override fun getNewListSize(): Int = newImages.size
+
+                override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    return oldImages[oldItemPosition] == newImages[newItemPosition]
+                }
+
+                override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
+                    return oldImages[oldItemPosition] == newImages[newItemPosition]
+                }
+            })
             images = newImages
-            notifyDataSetChanged()
+            diffResult.dispatchUpdatesTo(this)
         }
         
         fun getPreviouslySelectedUris(): Set<Uri> = previouslySelectedUris
@@ -254,7 +267,7 @@ class ImageSelectorActivity : AppCompatActivity() {
                 super.onBindViewHolder(holder, position, payloads)
             } else {
                 // 有 payload，只更新序号部分
-                if (payloads.contains(ImageSelectorActivity.PAYLOAD_UPDATE_SEQUENCE)) {
+                if (payloads.contains(PAYLOAD_UPDATE_SEQUENCE)) {
                     holder.updateSequenceOnly(images[position])
                 }
             }

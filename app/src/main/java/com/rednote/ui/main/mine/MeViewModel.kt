@@ -1,7 +1,6 @@
 package com.rednote.ui.main.mine
 
 import com.rednote.data.api.RetrofitClient
-import com.rednote.data.model.UserInfo
 import com.rednote.ui.base.BaseViewModel
 import com.rednote.utils.UserManager
 

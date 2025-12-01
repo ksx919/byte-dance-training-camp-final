@@ -140,7 +140,7 @@ class FeedItemView @JvmOverloads constructor(
             if (!item.avatarUrl.isNullOrEmpty()) {
                 val size = FeedUIConfig.avatarSize
                 // 头像也可以优化，固定请求小图 (例如 100px)
-                val avatarUrl = getThumbnailUrl(item.avatarUrl!!, 100)
+                val avatarUrl = getThumbnailUrl(item.avatarUrl, 100)
                 
                 Glide.with(context)
                     .load(avatarUrl)

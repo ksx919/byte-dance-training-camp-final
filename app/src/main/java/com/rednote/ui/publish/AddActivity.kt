@@ -78,7 +78,7 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
         try {
             val closeBtn = binding.root.findViewById<View>(R.id.btn_back)
             closeBtn?.setOnClickListener { handleBackPress() }
-        } catch (e: Exception) {}
+        } catch (_: Exception) {}
     }
 
     override fun initData() {
@@ -378,7 +378,7 @@ class AddActivity : BaseActivity<ActivityAddBinding>() {
             val uri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", imageFile)
             viewModel.setPendingCameraUri(uri)
             cameraLauncher.launch(uri)
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             Toast.makeText(this, "无法打开相机", Toast.LENGTH_SHORT).show()
         }
     }
