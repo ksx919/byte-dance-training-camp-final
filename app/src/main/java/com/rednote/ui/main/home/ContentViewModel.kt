@@ -181,11 +181,23 @@ class ContentViewModel : BaseViewModel() {
         return item
     }
 
+    private val _isError = MutableStateFlow(false)
+    val isError: StateFlow<Boolean> = _isError
+
+    private val _isEmpty = MutableStateFlow(false)
+    val isEmpty: StateFlow<Boolean> = _isEmpty
+
     fun loadFeed(isRefresh: Boolean = false, size: Int) {
         if (!isRefresh && _isLoadingMore.value) return
 
         viewModelScope.launch {
-            if (isRefresh) _isLoadingFlow.value = true else _isLoadingMore.value = true
+            if (isRefresh) {
+                _isLoadingFlow.value = true
+                _isError.value = false // 重置错误状态
+                _isEmpty.value = false // 重置空状态
+            } else {
+                _isLoadingMore.value = true
+            }
 
             try {
                 val response = RetrofitClient.postApiService.getFeed(cursor = lastId, size = size)
@@ -200,12 +212,6 @@ class ContentViewModel : BaseViewModel() {
                             preCalculateItem(item)
                         }
                     }
-
-                    // 2. 【核心修改】如果是刷新，且有正在上传的本地帖子，强行插到第一位 // 移除
-                    // if (isRefresh && pendingUploadingPost != null) { // 移除
-                    //     val localItem = preCalculateItem(pendingUploadingPost!!) // 移除
-                    //     processedItems.add(0, localItem) // 移除
-                    // } // 移除
 
                     // 2. 更新 _serverPosts
                     if (isFirstLoad) {
@@ -230,11 +236,19 @@ class ContentViewModel : BaseViewModel() {
 
                     lastId = result.nextCursor
                 } else {
-                    showToast("内容加载失败，请稍后重试")
+                    if (isRefresh && _serverPosts.value.isEmpty()) {
+                        _isEmpty.value = true
+                    } else {
+                        _isError.value = true
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                showToast("网络连接异常，请检查网络")
+                if (isRefresh && _serverPosts.value.isEmpty()) {
+                    _isError.value = true
+                } else {
+                    showToast("网络连接异常，请检查网络")
+                }
             } finally {
                 if (isRefresh) _isLoadingFlow.value = false else _isLoadingMore.value = false
             }

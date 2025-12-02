@@ -150,6 +150,11 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
             viewModel.loadFeed(isRefresh = true, size = 10)
         }
         binding.swipeRefresh.setColorSchemeResources(android.R.color.holo_red_light)
+
+        // 错误页点击重试
+        binding.llErrorView.setOnClickListener {
+            viewModel.loadFeed(isRefresh = true, size = 10)
+        }
     }
 
     override fun initObservers() {
@@ -157,18 +162,51 @@ class ContentFragment : BaseFragment<FragmentContentBinding, ContentViewModel>()
             combine(
                 viewModel.feedList,
                 viewModel.isLoadingFlow,
-                viewModel.isLoadingMore
-            ) { list, isLoading, isLoadingMore ->
-                Triple(list, isLoading, isLoadingMore)
-            }.collectLatest { (list, isLoading, isLoadingMore) ->
-                feedAdapter.submitList(list, isLoading || isLoadingMore)
+                viewModel.isLoadingMore,
+                viewModel.isError,
+                viewModel.isEmpty
+            ) { list, isLoading, isLoadingMore, isError, isEmpty ->
+                UIState(list, isLoading, isLoadingMore, isError, isEmpty)
+            }.collectLatest { state ->
+                // 1. 处理列表数据
+                feedAdapter.submitList(state.list, state.isLoading || state.isLoadingMore)
 
-                if (!isLoading) {
+                // 2. 统一处理可见性状态 (互斥逻辑)
+                if (state.isError) {
+                    // 错误态
+                    binding.llErrorView.visibility = android.view.View.VISIBLE
+                    binding.llEmptyView.visibility = android.view.View.GONE
+                    binding.swipeRefresh.visibility = android.view.View.GONE
                     binding.swipeRefresh.isRefreshing = false
+                } else if (state.isEmpty) {
+                    // 空状态
+                    binding.llErrorView.visibility = android.view.View.GONE
+                    binding.llEmptyView.visibility = android.view.View.VISIBLE
+                    binding.swipeRefresh.visibility = android.view.View.GONE
+                    binding.swipeRefresh.isRefreshing = false
+                } else {
+                    // 内容态 (包括加载中)
+                    binding.llErrorView.visibility = android.view.View.GONE
+                    binding.llEmptyView.visibility = android.view.View.GONE
+                    binding.swipeRefresh.visibility = android.view.View.VISIBLE
+                    
+                    // 同步 Loading 状态
+                    binding.swipeRefresh.post {
+                        binding.swipeRefresh.isRefreshing = state.isLoading
+                    }
                 }
             }
         }
     }
+
+    // 辅助数据类，用于 combine
+    data class UIState(
+        val list: List<PostInfo>,
+        val isLoading: Boolean,
+        val isLoadingMore: Boolean,
+        val isError: Boolean,
+        val isEmpty: Boolean
+    )
 
     override fun initData() {
         viewModel.loadFeed(isRefresh = true, size = 10)

@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 object RetrofitClient {
-    private const val BASE_URL = "http://10.133.75.139:8080/rednote/"
+    private const val BASE_URL = "http://10.133.11.67:8080/rednote/"
 
     private val okHttpClient by lazy {
         // 日志拦截器，能看到请求头、参数、返回结果
