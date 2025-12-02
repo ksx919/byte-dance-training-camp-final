@@ -140,7 +140,7 @@ CREATE TABLE IF NOT EXISTS `comment_likes` (
 
 1. 进入 `java-backend` 目录。
 
-2. 配置 `src/main/resources/application.yml`，填入** MySQL 和 Aliyun OSS **配置。
+2. 配置 `src/main/resources/application.yml`，填入 **MySQL 和 Aliyun OSS** 配置。
 
 3. 运行 `RedNoteApplication` 启动服务。
    
